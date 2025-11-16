@@ -50,6 +50,12 @@ export function overlayAction(iframe, options = {}) {
 
 		const target = event.target;
 
+		// Close context menu on any click
+		const iframe = iframeDoc.defaultView?.frameElement;
+		if (iframe) {
+			iframe.dispatchEvent(new CustomEvent('close-context-menu'));
+		}
+
 		if (target === overlayDiv || target === highlightDiv || target === labelDiv || 
 		    target?.closest?.('.hive-label')) {
 			return;

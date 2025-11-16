@@ -75,6 +75,13 @@
 	function handleElementAction() {
 		showContextMenu = false;
 	}
+
+	/**
+	 * Handle close context menu
+	 */
+	function handleCloseContextMenu() {
+		showContextMenu = false;
+	}
 </script>
 
 <svelte:head>
@@ -90,6 +97,7 @@
 			onLoad={handleCanvasLoad}
 			onElementSelect={handleElementSelect}
 			onContextMenu={handleContextMenu}
+			onCloseContextMenu={handleCloseContextMenu}
 		/>
 	</div>
 	

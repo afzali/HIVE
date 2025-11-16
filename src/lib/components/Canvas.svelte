@@ -29,6 +29,11 @@
 	 */
 	export let onContextMenu = () => {};
 
+	/**
+	 * @type {function(): void} onCloseContextMenu - Callback when context menu should close
+	 */
+	export let onCloseContextMenu = () => {};
+
 	/** @type {HTMLIFrameElement} */
 	let iframeElement;
 
@@ -41,6 +46,13 @@
 	 */
 	function handleContextMenuEvent(event) {
 		onContextMenu(event.detail);
+	}
+
+	/**
+	 * Handle close context menu event from iframe
+	 */
+	function handleCloseContextMenuEvent() {
+		onCloseContextMenu();
 	}
 
 	/**
@@ -152,6 +164,7 @@
 			bind:this={iframeElement}
 			on:load={handleIframeLoad}
 			on:show-context-menu={handleContextMenuEvent}
+			on:close-context-menu={handleCloseContextMenuEvent}
 			use:overlayAction={{ onElementSelect }}
 			title="HTML Canvas"
 			class="w-full h-full bg-white border-0"
