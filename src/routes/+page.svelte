@@ -2,8 +2,15 @@
 	import Canvas from '$lib/components/Canvas.svelte';
 	import FloatingButton from '$lib/components/FloatingButton.svelte';
 	import PropertyPanel from '$lib/components/PropertyPanel.svelte';
+	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import { htmlSource, currentMode, viewportSize, iframeDocument, selectedElement } from '$lib/stores.js';
 	import { history } from '$lib/history.js';
+
+	/** @type {boolean} */
+	let showContextMenu = false;
+
+	/** @type {{x: number, y: number}} */
+	let contextMenuPosition = { x: 0, y: 0 };
 
 	/**
 	 * Handle iframe load
@@ -52,6 +59,22 @@
 		console.log('Property changed:', property, value);
 		// TODO: Add to history for undo/redo
 	}
+
+	/**
+	 * Handle context menu request
+	 * @param {{x: number, y: number}} position
+	 */
+	function handleContextMenu(position) {
+		contextMenuPosition = position;
+		showContextMenu = true;
+	}
+
+	/**
+	 * Handle element action from context menu
+	 */
+	function handleElementAction() {
+		showContextMenu = false;
+	}
 </script>
 
 <svelte:head>
@@ -66,8 +89,20 @@
 			viewportSize={$viewportSize} 
 			onLoad={handleCanvasLoad}
 			onElementSelect={handleElementSelect}
+			onContextMenu={handleContextMenu}
 		/>
 	</div>
+	
+	<!-- Context Menu -->
+	{#if showContextMenu && $selectedElement && $currentMode === 'edit'}
+		<ContextMenu
+			position={contextMenuPosition}
+			onDuplicate={handleElementAction}
+			onDelete={handleElementAction}
+			onAdd={handleElementAction}
+			onMove={handleElementAction}
+		/>
+	{/if}
 	
 	<!-- Property Panel -->
 	{#if $currentMode === 'edit'}
@@ -80,3 +115,6 @@
 		onResponsiveModeChange={handleResponsiveModeChange} 
 	/>
 </main>
+
+<!-- Click outside to close context menu -->
+<svelte:window on:click={() => (showContextMenu = false)} />

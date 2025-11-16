@@ -129,19 +129,35 @@ export function insertElement(parent, tag, position) {
 /**
  * Duplicate an element
  * @param {HTMLElement} element
- * @returns {HTMLElement}
+ * @returns {HTMLElement|null}
  */
 export function duplicateElement(element) {
-	const clone = element.cloneNode(true);
-
-	// Insert after the original element
-	if (element.nextSibling) {
-		element.parentElement?.insertBefore(clone, element.nextSibling);
-	} else {
-		element.parentElement?.appendChild(clone);
+	if (!element || !element.parentElement) {
+		console.error('Cannot duplicate element: invalid element or no parent');
+		return null;
 	}
 
-	return clone;
+	try {
+		// Clone the element with all children and attributes
+		const clone = element.cloneNode(true);
+
+		// Remove any hive-id to avoid duplicates
+		if (clone.hasAttribute('data-hive-id')) {
+			clone.removeAttribute('data-hive-id');
+		}
+
+		// Insert after the original element
+		if (element.nextSibling) {
+			element.parentElement.insertBefore(clone, element.nextSibling);
+		} else {
+			element.parentElement.appendChild(clone);
+		}
+
+		return clone;
+	} catch (error) {
+		console.error('Error duplicating element:', error);
+		return null;
+	}
 }
 
 /**

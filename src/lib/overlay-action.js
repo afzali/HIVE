@@ -77,6 +77,39 @@ export function overlayAction(iframe, options = {}) {
 		onElementSelect(target);
 	}
 
+	function handleContextMenu(event) {
+		// Only handle in edit mode
+		if (!isEditMode) return;
+
+		const target = event.target;
+
+		// Ignore if clicking on our overlay elements
+		if (target === overlayDiv || target === highlightDiv || target === labelDiv) {
+			return;
+		}
+
+		event.preventDefault();
+		event.stopPropagation();
+
+		// Select the element if not already selected
+		if (target !== get(selectedElement)) {
+			selectedElement.set(target);
+			onElementSelect(target);
+		}
+
+		// Dispatch custom event for context menu
+		const iframe = iframeDoc.defaultView?.frameElement;
+		if (iframe) {
+			const iframeRect = iframe.getBoundingClientRect();
+			iframe.dispatchEvent(new CustomEvent('show-context-menu', {
+				detail: {
+					x: iframeRect.left + event.clientX,
+					y: iframeRect.top + event.clientY
+				}
+			}));
+		}
+	}
+
 	function setupOverlay() {
 		iframeDoc = iframe.contentDocument;
 		if (!iframeDoc || !iframeDoc.body) {
@@ -102,6 +135,7 @@ export function overlayAction(iframe, options = {}) {
 		iframeDoc.body.appendChild(labelDiv);
 
 		iframeDoc.body.addEventListener('click', handleClick);
+		iframeDoc.body.addEventListener('contextmenu', handleContextMenu);
 		iframeDoc.defaultView?.addEventListener('scroll', updateHighlight, true);
 		iframeDoc.defaultView?.addEventListener('resize', updateHighlight);
 
@@ -121,19 +155,70 @@ export function overlayAction(iframe, options = {}) {
 			// Only show highlights in edit mode
 			if (!isEditMode) return;
 
+			// CRITICAL: Remove ALL old highlight and label elements from DOM
+			if (iframeDoc && iframeDoc.body) {
+				// Remove all existing highlights and labels (in case of duplicates)
+				const oldHighlights = iframeDoc.body.querySelectorAll('.hive-highlight');
+				const oldLabels = iframeDoc.body.querySelectorAll('.hive-label');
+				
+				oldHighlights.forEach(h => {
+					if (h !== highlightDiv) h.remove();
+				});
+				oldLabels.forEach(l => {
+					if (l !== labelDiv) l.remove();
+				});
+			}
+
+			// Always hide our main elements first
+			if (highlightDiv && labelDiv) {
+				highlightDiv.style.display = 'none';
+				labelDiv.style.display = 'none';
+				// Clear any event listeners by replacing content
+				labelDiv.innerHTML = '';
+			}
+
 			if (element && highlightDiv && labelDiv) {
+				// Check if element is still in the document
+				if (!element.isConnected) {
+					console.warn('Selected element is no longer in document');
+					selectedElement.set(null);
+					return;
+				}
+
 				const hiveId = getHiveId(element);
 				
+				// Show and update content
 				highlightDiv.style.display = 'block';
 				labelDiv.style.display = 'flex';
 				labelDiv.innerHTML = `
+					<span class="hive-drag-handle" style="cursor: move; padding: 0 4px; margin-right: 4px;" title="Drag to move (coming soon)">⋮⋮</span>
 					<span style="font-family: monospace; font-size: 10px;">${hiveId}</span>
+					<button class="hive-menu-btn" style="margin-left: 8px; padding: 0 4px; cursor: pointer;" title="More actions">⋮</button>
 				`;
 
-				updateHighlight();
-			} else if (highlightDiv && labelDiv) {
-				highlightDiv.style.display = 'none';
-				labelDiv.style.display = 'none';
+				// Add click handler to menu button
+				const menuBtn = labelDiv.querySelector('.hive-menu-btn');
+				if (menuBtn) {
+					menuBtn.addEventListener('click', (e) => {
+						e.stopPropagation();
+						const iframe = iframeDoc.defaultView?.frameElement;
+						if (iframe) {
+							const rect = labelDiv.getBoundingClientRect();
+							const iframeRect = iframe.getBoundingClientRect();
+							iframe.dispatchEvent(new CustomEvent('show-context-menu', {
+								detail: {
+									x: iframeRect.left + rect.left,
+									y: iframeRect.top + rect.bottom + 5
+								}
+							}));
+						}
+					});
+				}
+
+				// Force immediate update
+				requestAnimationFrame(() => {
+					updateHighlight();
+				});
 			}
 		});
 	}
@@ -144,6 +229,7 @@ export function overlayAction(iframe, options = {}) {
 		if (!iframeDoc) return;
 
 		iframeDoc.body?.removeEventListener('click', handleClick);
+		iframeDoc.body?.removeEventListener('contextmenu', handleContextMenu);
 		iframeDoc.defaultView?.removeEventListener('scroll', updateHighlight, true);
 		iframeDoc.defaultView?.removeEventListener('resize', updateHighlight);
 		

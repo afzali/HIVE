@@ -22,6 +22,18 @@ export function addHiveIds(doc) {
 
 	const elements = doc.body.querySelectorAll('*');
 	elements.forEach((element) => {
+		// Skip overlay elements (they should not have hive IDs)
+		if (element.classList.contains('hive-overlay') || 
+		    element.classList.contains('hive-highlight') || 
+		    element.classList.contains('hive-label')) {
+			return;
+		}
+
+		// Skip children of overlay elements
+		if (element.closest('.hive-overlay, .hive-highlight, .hive-label')) {
+			return;
+		}
+
 		if (!element.getAttribute(HIVE_ID_ATTR)) {
 			element.setAttribute(HIVE_ID_ATTR, generateId());
 		}

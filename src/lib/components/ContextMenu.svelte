@@ -1,6 +1,8 @@
 <script>
 	import { duplicateElement, insertElement, isValidElement } from '$lib/dom-utils.js';
 	import { selectedElement } from '$lib/stores.js';
+	import { syncHTMLSource } from '$lib/html-sync.js';
+	import { addHiveIds } from '$lib/element-id.js';
 
 	/**
 	 * @type {import('$lib/types.js').ContextMenuPosition} position
@@ -47,6 +49,62 @@
 	];
 
 	/**
+	 * Handle duplicate
+	 */
+	function handleDuplicate() {
+		if (!$selectedElement) return;
+
+		const cloned = duplicateElement($selectedElement);
+		if (cloned) {
+			// Add hive IDs to the cloned element and its children
+			const doc = $selectedElement.ownerDocument;
+			addHiveIds(doc);
+			
+			// Small delay to ensure DOM is updated and highlight can be calculated
+			setTimeout(() => {
+				// Select the newly created element
+				selectedElement.set(cloned);
+			}, 50);
+			
+			// Sync HTML
+			syncHTMLSource();
+			
+			onDuplicate();
+		}
+	}
+
+	/**
+	 * Handle delete
+	 */
+	function handleDelete() {
+		if (!$selectedElement) return;
+
+		// Validate element can be deleted
+		if (!isValidElement($selectedElement)) {
+			console.error('Cannot delete html or body element');
+			// TODO: Show error toast when toast system is implemented
+			return;
+		}
+
+		try {
+			const parent = $selectedElement.parentElement;
+			if (parent) {
+				parent.removeChild($selectedElement);
+				
+				// Clear selection
+				selectedElement.set(null);
+				
+				// Sync HTML
+				syncHTMLSource();
+				
+				onDelete();
+			}
+		} catch (error) {
+			console.error('Error deleting element:', error);
+		}
+	}
+
+	/**
 	 * Handle add element
 	 * @param {string} type
 	 * @param {string} position
@@ -72,7 +130,7 @@
 >
 	<!-- Duplicate -->
 	<button
-		on:click={onDuplicate}
+		on:click={handleDuplicate}
 		class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 	>
 		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,7 +146,7 @@
 
 	<!-- Delete -->
 	<button
-		on:click={onDelete}
+		on:click={handleDelete}
 		class="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
 	>
 		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

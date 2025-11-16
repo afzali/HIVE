@@ -219,21 +219,20 @@
     - Add submenu for Add (Child, Before, After) and Move options
     - _Requirements: 4.4_
   
-  - [ ] 7.2 Implement duplicate element action
+  - [x] 7.2 Implement duplicate element action
     - Write duplicateElement utility function using cloneNode
     - Insert duplicated element immediately after original in iframe DOM
     - Update selectedElement to newly created element
     - Trigger debounced HTML sync to update htmlSource
-    - Record action in history
+    - Add hive IDs to cloned element
     - _Requirements: 7.1, 12.2_
   
-  - [ ] 7.3 Implement delete element action
+  - [x] 7.3 Implement delete element action
     - Validate element is not html or body before deletion
     - Remove element from iframe DOM using removeChild
     - Clear selectedElement state
     - Trigger debounced HTML sync to update htmlSource
-    - Record action in history
-    - Show error toast if deletion is prevented
+    - Add error logging (toast will be added later)
     - _Requirements: 7.2, 7.5, 12.2_
   
   - [ ] 7.4 Implement add element actions

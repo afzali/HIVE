@@ -24,11 +24,24 @@
 	 */
 	export let onElementSelect = () => {};
 
+	/**
+	 * @type {function(Object): void} onContextMenu - Callback when context menu is requested
+	 */
+	export let onContextMenu = () => {};
+
 	/** @type {HTMLIFrameElement} */
 	let iframeElement;
 
 	/** @type {boolean} */
 	let isReady = false;
+
+	/**
+	 * Handle context menu event from iframe
+	 * @param {CustomEvent} event
+	 */
+	function handleContextMenuEvent(event) {
+		onContextMenu(event.detail);
+	}
 
 	/**
 	 * Handle iframe load event
@@ -138,6 +151,7 @@
 		<iframe
 			bind:this={iframeElement}
 			on:load={handleIframeLoad}
+			on:show-context-menu={handleContextMenuEvent}
 			use:overlayAction={{ onElementSelect }}
 			title="HTML Canvas"
 			class="w-full h-full bg-white border-0"
