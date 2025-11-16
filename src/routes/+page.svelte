@@ -1,7 +1,6 @@
 <script>
 	import Canvas from '$lib/components/Canvas.svelte';
 	import FloatingButton from '$lib/components/FloatingButton.svelte';
-	import Overlay from '$lib/components/Overlay.svelte';
 	import PropertyPanel from '$lib/components/PropertyPanel.svelte';
 	import { htmlSource, currentMode, viewportSize, iframeDocument, selectedElement } from '$lib/stores.js';
 	import { history } from '$lib/history.js';
@@ -60,13 +59,14 @@
 </svelte:head>
 
 <main class="w-screen h-screen overflow-hidden bg-gray-900 relative">
-	<!-- Canvas Area with Overlay -->
+	<!-- Canvas Area -->
 	<div class="absolute inset-0 {$currentMode === 'edit' && $selectedElement ? 'right-80' : ''}">
-		<Canvas htmlSource={$htmlSource} viewportSize={$viewportSize} onLoad={handleCanvasLoad}>
-			{#if $currentMode === 'edit'}
-				<Overlay iframeDocument={$iframeDocument} onElementSelect={handleElementSelect} />
-			{/if}
-		</Canvas>
+		<Canvas 
+			htmlSource={$htmlSource} 
+			viewportSize={$viewportSize} 
+			onLoad={handleCanvasLoad}
+			onElementSelect={handleElementSelect}
+		/>
 	</div>
 	
 	<!-- Property Panel -->
