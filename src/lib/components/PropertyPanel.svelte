@@ -6,6 +6,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { selectedElement } from '$lib/stores.js';
 	import { applyStyleProperty } from '$lib/dom-utils.js';
+	import { syncHTMLSource } from '$lib/html-sync.js';
 
 	/**
 	 * @type {function(string, any): void} onPropertyChange
@@ -75,6 +76,7 @@
 		if ($selectedElement) {
 			$selectedElement.id = elementId;
 			onPropertyChange('id', elementId);
+			syncHTMLSource();
 		}
 	}
 
@@ -91,6 +93,7 @@
 				$selectedElement.className.baseVal = elementClasses.join(' ');
 			}
 			onPropertyChange('className', elementClasses.join(' '));
+			syncHTMLSource();
 			newClass = '';
 		}
 	}
@@ -109,6 +112,7 @@
 				$selectedElement.className.baseVal = elementClasses.join(' ');
 			}
 			onPropertyChange('className', elementClasses.join(' '));
+			syncHTMLSource();
 		}
 	}
 
@@ -119,6 +123,7 @@
 		if ($selectedElement) {
 			$selectedElement.textContent = textContent;
 			onPropertyChange('textContent', textContent);
+			syncHTMLSource();
 		}
 	}
 
@@ -132,6 +137,7 @@
 			const property = `padding${side.charAt(0).toUpperCase() + side.slice(1)}`;
 			applyStyleProperty($selectedElement, property, value);
 			onPropertyChange(property, value);
+			syncHTMLSource();
 		}
 	}
 
@@ -142,6 +148,7 @@
 		if ($selectedElement) {
 			applyStyleProperty($selectedElement, 'width', width);
 			onPropertyChange('width', width);
+			syncHTMLSource();
 		}
 	}
 
@@ -152,6 +159,7 @@
 		if ($selectedElement) {
 			applyStyleProperty($selectedElement, 'height', height);
 			onPropertyChange('height', height);
+			syncHTMLSource();
 		}
 	}
 
@@ -164,6 +172,7 @@
 			display = selected.value;
 			applyStyleProperty($selectedElement, 'display', display);
 			onPropertyChange('display', display);
+			syncHTMLSource();
 		}
 	}
 </script>

@@ -184,12 +184,22 @@
   - [x] 6.5 Create property change handler
 
     - Write applyStyleProperty utility function
-    - Implement DOM update with error handling
+    - Implement immediate DOM update with error handling (no reload)
+    - Implement debounced HTML extraction (500ms) to sync htmlSource store
     - Record change in history for undo/redo
-    - Trigger htmlSource sync after property change
-    - _Requirements: 5.4, 12.1, 12.3_
+    - Maintain scroll position and selected element during sync
+    - _Requirements: 5.4, 12.1, 12.3, 12.4, 12.5_
+
+  - [x] 6.6 Implement HTML sync utilities
+    - Create extractHTMLFromIframe utility function to get complete HTML using documentElement.outerHTML
+    - Create debounced syncHTMLSource function (500ms delay) to update htmlSource store
+    - Preserve scroll position and selectedElement during sync
+    - Add error handling for iframe access issues
+    - Export utilities for use in property changes and element operations
+    - Integrate syncHTMLSource into all PropertyPanel change handlers
+    - _Requirements: 8.1, 12.1, 12.4, 12.5_
   
-  - [ ]* 6.6 Write component tests for PropertyPanel
+  - [ ]* 6.7 Write component tests for PropertyPanel
     - Test property panel displays correct values for selected element
     - Test padding changes apply to element style
     - Test class list editor adds and removes classes
@@ -211,34 +221,38 @@
   
   - [ ] 7.2 Implement duplicate element action
     - Write duplicateElement utility function using cloneNode
-    - Insert duplicated element immediately after original
+    - Insert duplicated element immediately after original in iframe DOM
     - Update selectedElement to newly created element
+    - Trigger debounced HTML sync to update htmlSource
     - Record action in history
-    - _Requirements: 7.1_
+    - _Requirements: 7.1, 12.2_
   
   - [ ] 7.3 Implement delete element action
     - Validate element is not html or body before deletion
-    - Remove element from DOM using removeChild
+    - Remove element from iframe DOM using removeChild
     - Clear selectedElement state
+    - Trigger debounced HTML sync to update htmlSource
     - Record action in history
     - Show error toast if deletion is prevented
-    - _Requirements: 7.2, 7.5_
+    - _Requirements: 7.2, 7.5, 12.2_
   
   - [ ] 7.4 Implement add element actions
     - Create element type selector using shadcn-svelte Dialog or Select (div, section, button, a, img, input, h1, p, span)
     - Write insertElement utility in JavaScript for Child, Before, After positions
     - Generate default element structure with placeholder content and basic styling
-    - Insert element into DOM at specified position
+    - Insert element into iframe DOM at specified position
     - Auto-select newly created element
-    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
+    - Trigger debounced HTML sync to update htmlSource
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 12.2_
   
   - [ ] 7.5 Implement move element actions
     - Write moveElement utility for Up, Down, Before, After, Into Parent
     - Validate move operation is possible (e.g., has sibling for Up/Down)
-    - Update DOM structure using insertBefore and appendChild
+    - Update iframe DOM structure using insertBefore and appendChild
     - Maintain element selection after move
+    - Trigger debounced HTML sync to update htmlSource
     - Record action in history
-    - _Requirements: 7.3, 7.4_
+    - _Requirements: 7.3, 7.4, 12.2, 12.5_
   
   - [ ]* 7.6 Write unit tests for element manipulation utilities
     - Test duplicateElement creates exact copy
@@ -287,11 +301,11 @@
     - _Requirements: 13.1_
   
   - [ ] 9.2 Implement Save functionality
-    - Create extractHTML utility to get complete HTML from iframe
-    - Update htmlSource store with current Canvas state
+    - Create extractHTML utility to get complete HTML from iframe using documentElement.outerHTML
+    - Ensure htmlSource is already synced via debounced updates from property changes
+    - Implement downloadHTML utility for file export using Blob and download link
+    - Add auto-save to localStorage with debouncing (5 seconds)
     - Sync Code Editor content if in Code mode
-    - Implement downloadHTML utility for file export
-    - Add auto-save to localStorage with debouncing
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5_
   
   - [ ] 9.3 Implement Undo and Redo functionality
