@@ -235,7 +235,7 @@
     - Add error logging (toast will be added later)
     - _Requirements: 7.2, 7.5, 12.2_
   
-  - [ ] 7.4 Implement add element actions
+  - [x] 7.4 Implement add element actions
     - Create element type selector using shadcn-svelte Dialog or Select (div, section, button, a, img, input, h1, p, span)
     - Write insertElement utility in JavaScript for Child, Before, After positions
     - Generate default element structure with placeholder content and basic styling
@@ -244,13 +244,12 @@
     - Trigger debounced HTML sync to update htmlSource
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 12.2_
   
-  - [ ] 7.5 Implement move element actions
+  - [x] 7.5 Implement move element actions
     - Write moveElement utility for Up, Down, Before, After, Into Parent
     - Validate move operation is possible (e.g., has sibling for Up/Down)
     - Update iframe DOM structure using insertBefore and appendChild
     - Maintain element selection after move
     - Trigger debounced HTML sync to update htmlSource
-    - Record action in history
     - _Requirements: 7.3, 7.4, 12.2, 12.5_
   
   - [ ]* 7.6 Write unit tests for element manipulation utilities

@@ -95,35 +95,81 @@ export function applyStyleProperty(element, property, value) {
 
 /**
  * Insert a new element
- * @param {HTMLElement} parent
- * @param {string} tag
- * @param {import('./types.js').InsertPosition} position
- * @returns {HTMLElement}
+ * @param {HTMLElement} referenceElement - The element to insert relative to
+ * @param {string} tag - Tag name for new element
+ * @param {string} position - Where to insert: 'child', 'before', 'after'
+ * @returns {HTMLElement|null}
  */
-export function insertElement(parent, tag, position) {
-	const newElement = parent.ownerDocument.createElement(tag);
-
-	// Add default content and styling
-	newElement.textContent = `New ${tag}`;
-	newElement.className = 'p-4 bg-gray-100 border border-gray-300';
-
-	switch (position) {
-		case 'child':
-			parent.appendChild(newElement);
-			break;
-		case 'before':
-			parent.parentElement?.insertBefore(newElement, parent);
-			break;
-		case 'after':
-			if (parent.nextSibling) {
-				parent.parentElement?.insertBefore(newElement, parent.nextSibling);
-			} else {
-				parent.parentElement?.appendChild(newElement);
-			}
-			break;
+export function insertElement(referenceElement, tag, position) {
+	if (!referenceElement || !referenceElement.ownerDocument) {
+		console.error('Invalid reference element');
+		return null;
 	}
 
-	return newElement;
+	try {
+		const newElement = referenceElement.ownerDocument.createElement(tag);
+
+		// Add default content based on tag type
+		switch (tag.toLowerCase()) {
+			case 'img':
+				newElement.src = 'https://via.placeholder.com/150';
+				newElement.alt = 'Placeholder image';
+				break;
+			case 'a':
+				newElement.href = '#';
+				newElement.textContent = 'Link';
+				break;
+			case 'button':
+				newElement.textContent = 'Button';
+				break;
+			case 'input':
+				newElement.type = 'text';
+				newElement.placeholder = 'Enter text';
+				break;
+			case 'h1':
+			case 'h2':
+			case 'h3':
+				newElement.textContent = `Heading ${tag.charAt(1)}`;
+				break;
+			case 'p':
+				newElement.textContent = 'Paragraph text';
+				break;
+			default:
+				newElement.textContent = `New ${tag}`;
+		}
+
+		// Add default styling
+		newElement.style.padding = '8px';
+		newElement.style.margin = '4px';
+		newElement.style.border = '1px dashed #ccc';
+
+		// Insert based on position
+		switch (position) {
+			case 'child':
+				referenceElement.appendChild(newElement);
+				break;
+			case 'before':
+				if (referenceElement.parentElement) {
+					referenceElement.parentElement.insertBefore(newElement, referenceElement);
+				}
+				break;
+			case 'after':
+				if (referenceElement.nextSibling) {
+					referenceElement.parentElement?.insertBefore(newElement, referenceElement.nextSibling);
+				} else {
+					referenceElement.parentElement?.appendChild(newElement);
+				}
+				break;
+			default:
+				console.error('Invalid position:', position);
+				return null;
+		}
+
+		return newElement;
+	} catch (error) {
+		console.error('Error inserting element:', error);
+		return null;
+	}
 }
 
 /**

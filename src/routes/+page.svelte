@@ -125,4 +125,9 @@
 </main>
 
 <!-- Click outside to close context menu -->
-<svelte:window on:click={() => (showContextMenu = false)} />
+<svelte:window on:click={(e) => {
+	// Don't close if clicking inside context menu
+	if (!e.target.closest('.fixed.bg-white.rounded-lg')) {
+		showContextMenu = false;
+	}
+}} />

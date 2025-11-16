@@ -1,5 +1,5 @@
 <script>
-	import { duplicateElement, insertElement, isValidElement } from '$lib/dom-utils.js';
+	import { duplicateElement, insertElement, moveElement, isValidElement } from '$lib/dom-utils.js';
 	import { selectedElement } from '$lib/stores.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
 	import { addHiveIds } from '$lib/element-id.js';
@@ -110,7 +110,27 @@
 	 * @param {string} position
 	 */
 	function handleAdd(type, position) {
-		onAdd({ type, position });
+		if (!$selectedElement) return;
+
+		const newElement = insertElement($selectedElement, type, position);
+		
+		if (newElement) {
+			// Add hive IDs to the new element
+			const doc = $selectedElement.ownerDocument;
+			addHiveIds(doc);
+			
+			// Small delay to ensure DOM is updated
+			setTimeout(() => {
+				// Select the newly created element
+				selectedElement.set(newElement);
+			}, 50);
+			
+			// Sync HTML
+			syncHTMLSource();
+			
+			onAdd({ type, position });
+		}
+		
 		showAddMenu = false;
 	}
 
@@ -119,6 +139,13 @@
 	 * @param {string} direction
 	 */
 	function handleMove(direction) {
+		if (!$selectedElement) return;
+
+		moveElement($selectedElement, direction);
+		
+		// Sync HTML
+		syncHTMLSource();
+		
 		onMove(direction);
 		showMoveMenu = false;
 	}
@@ -130,7 +157,7 @@
 >
 	<!-- Duplicate -->
 	<button
-		on:click={handleDuplicate}
+		on:click|stopPropagation={handleDuplicate}
 		class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
 	>
 		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,7 +173,7 @@
 
 	<!-- Delete -->
 	<button
-		on:click={handleDelete}
+		on:click|stopPropagation={handleDelete}
 		class="w-full px-4 py-2 text-left text-sm hover:bg-red-50 text-red-600 flex items-center gap-2"
 	>
 		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -165,7 +192,7 @@
 	<!-- Add -->
 	<div class="relative">
 		<button
-			on:click={() => (showAddMenu = !showAddMenu)}
+			on:click|stopPropagation={() => (showAddMenu = !showAddMenu)}
 			class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center justify-between"
 		>
 			<span class="flex items-center gap-2">
@@ -185,11 +212,14 @@
 		</button>
 
 		{#if showAddMenu}
-			<div class="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-48">
-				<div class="px-3 py-1 text-xs font-semibold text-gray-500">Add Child</div>
+			<div 
+				class="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-48 max-h-96 overflow-y-auto z-50"
+				on:click|stopPropagation
+			>
+				<div class="px-3 py-1 text-xs font-semibold text-gray-500 sticky top-0 bg-white">Add Child</div>
 				{#each elementTypes as type}
 					<button
-						on:click={() => handleAdd(type.value, 'child')}
+						on:click|stopPropagation={() => handleAdd(type.value, 'child')}
 						class="w-full px-4 py-1.5 text-left text-sm hover:bg-gray-100"
 					>
 						{type.label}
@@ -197,10 +227,10 @@
 				{/each}
 				
 				<div class="border-t border-gray-200 my-1"></div>
-				<div class="px-3 py-1 text-xs font-semibold text-gray-500">Add Before</div>
-				{#each elementTypes.slice(0, 3) as type}
+				<div class="px-3 py-1 text-xs font-semibold text-gray-500 sticky top-0 bg-white">Add Before</div>
+				{#each elementTypes as type}
 					<button
-						on:click={() => handleAdd(type.value, 'before')}
+						on:click|stopPropagation={() => handleAdd(type.value, 'before')}
 						class="w-full px-4 py-1.5 text-left text-sm hover:bg-gray-100"
 					>
 						{type.label}
@@ -208,10 +238,10 @@
 				{/each}
 				
 				<div class="border-t border-gray-200 my-1"></div>
-				<div class="px-3 py-1 text-xs font-semibold text-gray-500">Add After</div>
-				{#each elementTypes.slice(0, 3) as type}
+				<div class="px-3 py-1 text-xs font-semibold text-gray-500 sticky top-0 bg-white">Add After</div>
+				{#each elementTypes as type}
 					<button
-						on:click={() => handleAdd(type.value, 'after')}
+						on:click|stopPropagation={() => handleAdd(type.value, 'after')}
 						class="w-full px-4 py-1.5 text-left text-sm hover:bg-gray-100"
 					>
 						{type.label}
@@ -224,7 +254,7 @@
 	<!-- Move -->
 	<div class="relative">
 		<button
-			on:click={() => (showMoveMenu = !showMoveMenu)}
+			on:click|stopPropagation={() => (showMoveMenu = !showMoveMenu)}
 			class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100 flex items-center justify-between"
 		>
 			<span class="flex items-center gap-2">
@@ -244,15 +274,18 @@
 		</button>
 
 		{#if showMoveMenu}
-			<div class="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-32">
+			<div 
+				class="absolute left-full top-0 ml-1 bg-white rounded-lg shadow-xl border border-gray-200 py-1 min-w-32 z-50"
+				on:click|stopPropagation
+			>
 				<button
-					on:click={() => handleMove('up')}
+					on:click|stopPropagation={() => handleMove('up')}
 					class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
 				>
 					Move Up
 				</button>
 				<button
-					on:click={() => handleMove('down')}
+					on:click|stopPropagation={() => handleMove('down')}
 					class="w-full px-4 py-2 text-left text-sm hover:bg-gray-100"
 				>
 					Move Down
@@ -262,10 +295,4 @@
 	</div>
 </div>
 
-<!-- Click outside to close submenus -->
-<svelte:window
-	on:click={() => {
-		showAddMenu = false;
-		showMoveMenu = false;
-	}}
-/>
+
