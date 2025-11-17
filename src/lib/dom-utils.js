@@ -81,15 +81,35 @@ export function getElementBoundingBox(element, iframeRect) {
  * @param {string} value
  */
 export function applyStyleProperty(element, property, value) {
+	console.log('🎨 applyStyleProperty called:', { element, property, value });
+	
 	if (!element || !element.style) {
-		console.error('Invalid element for style application');
+		console.error('🎨 Invalid element for style application:', element);
 		return;
 	}
 
 	try {
-		element.style[property] = value;
+		console.log('🎨 Before setting style:', element.style[property]);
+		
+		// Handle empty values by removing the property
+		if (!value || value.trim() === '') {
+			element.style.removeProperty(property);
+			console.log('🎨 Removed property:', property);
+		} else {
+			// Convert camelCase to kebab-case for CSS properties
+			const cssProperty = property.replace(/([A-Z])/g, '-$1').toLowerCase();
+			element.style.setProperty(cssProperty, value);
+			console.log('🎨 Set property:', cssProperty, '=', value);
+		}
+		
+		console.log('🎨 After setting style:', element.style[property]);
+		console.log('🎨 Full style object:', element.style.cssText);
+		
+		// Force a repaint to ensure the change is visible
+		element.offsetHeight;
+		
 	} catch (error) {
-		console.error(`Error applying style ${property}:`, error);
+		console.error(`🎨 Error applying style ${property}:`, error);
 	}
 }
 
@@ -268,4 +288,22 @@ export function isValidElement(element) {
 
 	const tag = element.tagName.toUpperCase();
 	return tag !== 'HTML' && tag !== 'BODY';
+}
+
+/**
+ * Debounce a function call
+ * @param {Function} func - The function to debounce
+ * @param {number} wait - The delay in milliseconds
+ * @returns {Function} - The debounced function
+ */
+export function debounce(func, wait) {
+	let timeout;
+	return function executedFunction(...args) {
+		const later = () => {
+			clearTimeout(timeout);
+			func(...args);
+		};
+		clearTimeout(timeout);
+		timeout = setTimeout(later, wait);
+	};
 }

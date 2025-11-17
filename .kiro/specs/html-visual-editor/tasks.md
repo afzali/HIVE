@@ -164,12 +164,12 @@
   
   - [x] 6.3 Implement style properties editor
 
-    - Create four shadcn-svelte Input components for padding (top, right, bottom, left)
+    - Create four shadcn-svelte Input components for padding (top, right, bottom, left) with "Padding" label
+    - Create four shadcn-svelte Input components for margin (top, right, bottom, left) with "Margin" label
     - Create width and height inputs using shadcn-svelte Input with Select for unit selector (px, %, auto)
-    - Create display property using shadcn-svelte Select (block, inline, flex, grid, none)
-    - Implement alignment controls for flex containers using shadcn-svelte Select
-    - Apply style changes directly to element.style with 100ms debounce
-    - _Requirements: 5.1, 5.2, 5.3, 5.4_
+    - Create display property using shadcn-svelte Select as single-select (block, inline, flex, grid, none)
+    - Apply style changes immediately to element.style (no debounce) for instant visual feedback
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.10_
   
 
   - [x] 6.4 Implement text content editor
@@ -177,18 +177,19 @@
 
     - Detect if selected element contains text content
     - Create shadcn-svelte Textarea for editing textContent or innerHTML
-    - Implement live preview with debounced updates
+    - Implement debounced updates (300ms) on input event
+    - Implement immediate update on focusout event
     - Handle special characters and HTML entities
-    - _Requirements: 5.5_
+    - _Requirements: 5.7, 5.8_
   
   - [x] 6.5 Create property change handler
 
-    - Write applyStyleProperty utility function
-    - Implement immediate DOM update with error handling (no reload)
+    - Write applyStyleProperty utility function to apply styles immediately to element.style
+    - Implement immediate DOM update for style properties (no debounce)
     - Implement debounced HTML extraction (500ms) to sync htmlSource store
     - Record change in history for undo/redo
     - Maintain scroll position and selected element during sync
-    - _Requirements: 5.4, 12.1, 12.3, 12.4, 12.5_
+    - _Requirements: 5.5, 5.6, 12.1, 12.4, 12.5, 12.6, 12.7_
 
   - [x] 6.6 Implement HTML sync utilities
     - Create extractHTMLFromIframe utility function to get complete HTML using documentElement.outerHTML
@@ -199,12 +200,27 @@
     - Integrate syncHTMLSource into all PropertyPanel change handlers
     - _Requirements: 8.1, 12.1, 12.4, 12.5_
   
-  - [ ]* 6.7 Write component tests for PropertyPanel
+  - [x] 6.7 Fix PropertyPanel immediate updates and add margin controls
+
+
+
+    - Fix text content to update immediately on input with 300ms debounce AND on focusout
+    - Fix padding inputs to apply changes immediately (remove any debounce)
+    - Add margin controls (top, right, bottom, left) with visual label "Margin"
+    - Add visual label "Padding" above padding controls to distinguish from margin
+    - Fix display Select to be single-select only (not multiple)
+    - Ensure all style changes apply to element.style immediately
+    - Ensure HTML Source syncs with 500ms debounce after any change
+    - Test that selected element reference is maintained during sync
+    - _Requirements: 5.1, 5.2, 5.4, 5.5, 5.6, 5.7, 5.10, 12.1, 12.4, 12.6, 12.7_
+
+  - [ ]* 6.8 Write component tests for PropertyPanel
     - Test property panel displays correct values for selected element
-    - Test padding changes apply to element style
+    - Test padding changes apply to element style immediately
+    - Test margin changes apply to element style immediately
     - Test class list editor adds and removes classes
-    - Test text editor updates element content
-    - _Requirements: 5.1, 5.4_
+    - Test text editor updates element content with debounce and on focusout
+    - _Requirements: 5.1, 5.4, 5.5_
 
 - [-] 7. Implement Context Menu for quick element actions
 
@@ -261,6 +277,8 @@
 
 - [ ] 8. Build Code Editor mode with Monaco Editor
   - [x] 8.1 Create CodeEditor.svelte component
+
+
 
 
 

@@ -34,6 +34,17 @@
 	 */
 	export let onCloseContextMenu = () => {};
 
+	/**
+	 * Force reload iframe with new HTML (used when coming from Code Editor)
+	 * @param {string} newHtml
+	 */
+	export function reloadWithHTML(newHtml) {
+		if (iframeElement) {
+			isReady = false;
+			iframeElement.srcdoc = newHtml;
+		}
+	}
+
 	/** @type {HTMLIFrameElement} */
 	let iframeElement;
 
@@ -143,16 +154,17 @@
 	}
 
 	/**
-	 * Update iframe content when htmlSource changes
+	 * Initialize iframe with HTML on mount
 	 */
-	$: if (iframeElement && htmlSource) {
-		try {
-			// Use srcdoc for same-origin access
-			iframeElement.srcdoc = htmlSource;
-		} catch (error) {
-			console.error('Error updating iframe content:', error);
+	onMount(() => {
+		if (iframeElement && htmlSource) {
+			try {
+				iframeElement.srcdoc = htmlSource;
+			} catch (error) {
+				console.error('Error initializing iframe content:', error);
+			}
 		}
-	}
+	});
 </script>
 
 <div class="canvas-container relative w-full h-full bg-gray-100 flex items-center justify-center">

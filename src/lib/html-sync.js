@@ -48,10 +48,13 @@ function debounce(func, wait) {
  * Sync htmlSource with current iframe DOM (debounced)
  */
 export const syncHTMLSource = debounce(() => {
+	console.log('🔄 syncHTMLSource called');
 	const html = extractHTMLFromIframe();
 	if (html) {
 		htmlSource.set(html);
-		console.log('HTML synced from iframe to htmlSource');
+		console.log('🔄 HTML synced from iframe to htmlSource');
+	} else {
+		console.log('🔄 No HTML extracted');
 	}
 }, 500);
 

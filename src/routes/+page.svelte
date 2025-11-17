@@ -19,6 +19,9 @@
 	/** @type {any} */
 	let monacoEditor = null;
 
+	/** @type {any} */
+	let canvasComponent = null;
+
 	/**
 	 * Handle iframe load
 	 * @param {Document} doc
@@ -165,6 +168,7 @@
 	<!-- Canvas Area -->
 	<div class="absolute inset-0 {$currentMode === 'edit' && $selectedElement ? 'right-80' : ''}">
 		<Canvas 
+			bind:this={canvasComponent}
 			htmlSource={$htmlSource} 
 			viewportSize={$viewportSize} 
 			onLoad={handleCanvasLoad}
@@ -217,16 +221,22 @@
 								const newHtml = monacoEditor.getValue();
 								console.log('Getting HTML from Monaco Editor, length:', newHtml.length);
 								
-								// Update HTML source
+								// Update HTML source and force Canvas reload
 								htmlSource.set(newHtml);
+								if (canvasComponent) {
+									canvasComponent.reloadWithHTML(newHtml);
+								}
 								// Add to history for undo/redo
 								history.push(newHtml);
 								
 								console.log('HTML updated from Monaco Editor');
 							} else {
 								// If Monaco Editor is not available, the textarea is bound to htmlSource
-								// so the changes are already there, just add to history
+								// so the changes are already there, just add to history and reload canvas
 								console.log('Using fallback textarea, current HTML length:', $htmlSource.length);
+								if (canvasComponent) {
+									canvasComponent.reloadWithHTML($htmlSource);
+								}
 								history.push($htmlSource);
 								console.log('HTML updated from textarea');
 							}

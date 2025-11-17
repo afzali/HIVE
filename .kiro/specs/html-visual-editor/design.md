@@ -153,7 +153,9 @@ The HTML Visual Editor is a SvelteKit-based web application that provides a brow
 - Right sidebar displaying element properties
 - Uses shadcn-svelte Input, Label, Select, and Textarea components
 - Grouped controls for different property types
-- Real-time DOM updates on value change
+- Immediate DOM updates for style properties
+- Debounced updates for text content (300ms or on focusout)
+- Visual indicators to distinguish padding from margin
 
 ```javascript
 // PropertyPanel component props
@@ -175,6 +177,11 @@ The HTML Visual Editor is a SvelteKit-based web application that provides a brow
  * @property {string} styles.padding.right
  * @property {string} styles.padding.bottom
  * @property {string} styles.padding.left
+ * @property {Object} styles.margin
+ * @property {string} styles.margin.top
+ * @property {string} styles.margin.right
+ * @property {string} styles.margin.bottom
+ * @property {string} styles.margin.left
  * @property {string} styles.width
  * @property {string} styles.height
  * @property {string} styles.display
@@ -303,12 +310,21 @@ export function findElementByPath(root, path) { /* ... */ }
 export function getElementBoundingBox(element, iframeRect) { /* ... */ }
 
 /**
- * Apply a style property to an element
+ * Apply a style property to an element immediately
+ * Updates the element's inline style directly
  * @param {HTMLElement} element
  * @param {string} property
  * @param {string} value
  */
 export function applyStyleProperty(element, property, value) { /* ... */ }
+
+/**
+ * Debounce a function call
+ * @param {Function} func
+ * @param {number} wait
+ * @returns {Function}
+ */
+export function debounce(func, wait) { /* ... */ }
 
 /**
  * Insert a new element
@@ -775,6 +791,28 @@ describe('Edit Mode Flow', () => {
 - LocalStorage data validation on load
 - No sensitive data stored in browser storage
 - Clear indication when auto-save is active
+
+## Performance Considerations
+
+### Optimization Strategies
+
+1. **Immediate Style Updates**: Style property changes apply immediately to element.style for instant visual feedback
+2. **Debounced HTML Sync**: HTML Source synchronization debounced to 500ms to avoid excessive updates
+3. **Debounced Text Updates**: Text content changes debounced to 300ms or applied on focusout
+4. **Lazy Rendering**: Layers Panel uses virtual scrolling for large DOM trees
+5. **Efficient Selection**: Element path caching to avoid repeated DOM traversals
+6. **History Compression**: Store only diffs for undo/redo instead of full HTML snapshots (future enhancement)
+7. **Code Editor Lazy Load**: Monaco Editor loaded only when Code mode is activated
+
+### Performance Targets
+
+- Mode switching: < 300ms
+- Element selection: < 50ms
+- Style property update: Immediate (< 16ms)
+- HTML Source sync: < 500ms
+- Text content update: 300ms debounce or immediate on focusout
+- Canvas re-render: < 500ms
+- Undo/Redo: < 200ms
 
 ## Future Enhancements (Post-MVP)
 

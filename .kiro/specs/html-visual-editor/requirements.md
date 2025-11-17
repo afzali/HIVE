@@ -77,12 +77,16 @@ The HTML Visual Editor is a browser-based interactive tool that enables users to
 
 #### Acceptance Criteria
 
-1. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for padding on all four sides
-2. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for width and height
-3. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for display property including block, inline, and flex options
-4. WHEN the user modifies a property value, THE Editor System SHALL apply the change to the Canvas DOM within 100 milliseconds
-5. WHERE the selected element contains text content, THE Property Panel SHALL display a text editor control
-6. WHERE the selected element has a class attribute, THE Property Panel SHALL display an editable list of CSS classes
+1. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for padding on all four sides with visual indicators
+2. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for margin on all four sides with visual indicators
+3. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for width and height
+4. WHEN an element is selected in Edit mode, THE Property Panel SHALL display a single-select control for display property including block, inline, flex, grid, and none options
+5. WHEN the user modifies a style property value, THE Editor System SHALL apply the change to the selected element's inline style immediately
+6. WHEN the user modifies a style property value, THE Editor System SHALL update the HTML Source within 500 milliseconds to keep it synchronized
+7. WHEN the user modifies text content, THE Editor System SHALL apply the change on input with debounce of 300 milliseconds or on focus out
+8. WHERE the selected element contains text content, THE Property Panel SHALL display a text editor control
+9. WHERE the selected element has a class attribute, THE Property Panel SHALL display an editable list of CSS classes
+10. THE Property Panel SHALL display visual labels to distinguish between padding and margin controls
 
 ### Requirement 6
 
@@ -164,11 +168,13 @@ The HTML Visual Editor is a browser-based interactive tool that enables users to
 
 #### Acceptance Criteria
 
-1. WHEN the user modifies any property in the Property Panel, THE Editor System SHALL apply the change directly to the Canvas DOM element
-2. WHEN the user adds or removes an element, THE Editor System SHALL update the Canvas DOM immediately
-3. WHEN the user modifies text content, THE Editor System SHALL update the Canvas DOM element's textContent or innerHTML within 100 milliseconds
-4. THE Editor System SHALL apply all DOM changes without requiring a page reload or build process
-5. THE Editor System SHALL maintain the scroll position of the Canvas when applying DOM changes
+1. WHEN the user modifies any style property in the Property Panel, THE Editor System SHALL apply the change directly to the selected element's inline style immediately
+2. WHEN the user modifies text content, THE Editor System SHALL apply the change with debounce of 300 milliseconds or immediately on focus out
+3. WHEN the user adds or removes an element, THE Editor System SHALL update the Canvas DOM immediately
+4. WHEN any DOM change occurs, THE Editor System SHALL synchronize the HTML Source within 500 milliseconds
+5. THE Editor System SHALL apply all DOM changes without requiring a page reload or build process
+6. THE Editor System SHALL maintain the scroll position of the Canvas when applying DOM changes
+7. THE Editor System SHALL maintain the selected element reference during HTML Source synchronization
 
 ### Requirement 13
 

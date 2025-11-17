@@ -5,7 +5,7 @@
 	import { Badge } from '$lib/components/ui/badge';
 	import * as Select from '$lib/components/ui/select';
 	import { selectedElement } from '$lib/stores.js';
-	import { applyStyleProperty } from '$lib/dom-utils.js';
+	import { applyStyleProperty, debounce } from '$lib/dom-utils.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
 
 	/**
@@ -38,6 +38,18 @@
 	let paddingLeft = '';
 
 	/** @type {string} */
+	let marginTop = '';
+
+	/** @type {string} */
+	let marginRight = '';
+
+	/** @type {string} */
+	let marginBottom = '';
+
+	/** @type {string} */
+	let marginLeft = '';
+
+	/** @type {string} */
 	let width = '';
 
 	/** @type {string} */
@@ -46,27 +58,73 @@
 	/** @type {string} */
 	let display = '';
 
+	// Track the last processed element to avoid reactive loops
+	let lastProcessedElement = null;
+
 	/**
 	 * Update local state when selected element changes
 	 */
-	$: if ($selectedElement) {
-		elementId = $selectedElement.id || '';
+	function updateElementProperties(element) {
+		if (!element || !element.isConnected) {
+			console.warn('🔄 Selected element is not connected to DOM');
+			return;
+		}
+
+		console.log('🔄 PropertyPanel: Selected element changed:', element);
+		console.log('🔄 Element tag:', element.tagName);
+		
+		elementId = element.id || '';
 		// Handle className - it can be a string or SVGAnimatedString
-		const className = typeof $selectedElement.className === 'string' 
-			? $selectedElement.className 
-			: ($selectedElement.className?.baseVal || '');
+		const className = typeof element.className === 'string' 
+			? element.className 
+			: (element.className?.baseVal || '');
 		elementClasses = className ? className.split(' ').filter(Boolean) : [];
-		textContent = $selectedElement.textContent || '';
+		textContent = element.textContent || '';
 
 		// Get computed styles
-		const styles = window.getComputedStyle($selectedElement);
-		paddingTop = $selectedElement.style.paddingTop || styles.paddingTop || '';
-		paddingRight = $selectedElement.style.paddingRight || styles.paddingRight || '';
-		paddingBottom = $selectedElement.style.paddingBottom || styles.paddingBottom || '';
-		paddingLeft = $selectedElement.style.paddingLeft || styles.paddingLeft || '';
-		width = $selectedElement.style.width || '';
-		height = $selectedElement.style.height || '';
-		display = $selectedElement.style.display || styles.display || '';
+		const styles = window.getComputedStyle(element);
+		console.log('🔄 Computed styles:', {
+			paddingTop: styles.paddingTop,
+			paddingRight: styles.paddingRight,
+			paddingBottom: styles.paddingBottom,
+			paddingLeft: styles.paddingLeft,
+			width: styles.width,
+			height: styles.height,
+			display: styles.display
+		});
+		
+		// Helper function to clean up style values - prioritize inline styles
+		const getStyleValue = (inlineValue, computedValue) => {
+			// If there's an inline style, use it (this is what the user set)
+			if (inlineValue && inlineValue !== '') {
+				return inlineValue;
+			}
+			// Otherwise show computed value for reference
+			return computedValue || '';
+		};
+		
+		paddingTop = getStyleValue(element.style.paddingTop, styles.paddingTop);
+		paddingRight = getStyleValue(element.style.paddingRight, styles.paddingRight);
+		paddingBottom = getStyleValue(element.style.paddingBottom, styles.paddingBottom);
+		paddingLeft = getStyleValue(element.style.paddingLeft, styles.paddingLeft);
+		marginTop = getStyleValue(element.style.marginTop, styles.marginTop);
+		marginRight = getStyleValue(element.style.marginRight, styles.marginRight);
+		marginBottom = getStyleValue(element.style.marginBottom, styles.marginBottom);
+		marginLeft = getStyleValue(element.style.marginLeft, styles.marginLeft);
+		width = getStyleValue(element.style.width, '');
+		height = getStyleValue(element.style.height, '');
+		display = getStyleValue(element.style.display, styles.display);
+		
+		console.log('🔄 Final values:', {
+			paddingTop, paddingRight, paddingBottom, paddingLeft,
+			marginTop, marginRight, marginBottom, marginLeft,
+			width, height, display, textContent
+		});
+	}
+
+	$: if ($selectedElement && $selectedElement !== lastProcessedElement) {
+		lastProcessedElement = $selectedElement;
+		updateElementProperties($selectedElement);
 	}
 
 	/**
@@ -84,13 +142,21 @@
 	 * Add a new class
 	 */
 	function addClass() {
+		console.log('addClass called with:', newClass);
+		console.log('selectedElement:', $selectedElement);
+		console.log('current classes:', elementClasses);
+		
 		if (newClass && $selectedElement && !elementClasses.includes(newClass)) {
 			elementClasses = [...elementClasses, newClass];
+			console.log('new classes array:', elementClasses);
+			
 			// Handle both regular elements and SVG elements
 			if (typeof $selectedElement.className === 'string') {
 				$selectedElement.className = elementClasses.join(' ');
+				console.log('Updated className to:', $selectedElement.className);
 			} else if ($selectedElement.className?.baseVal !== undefined) {
 				$selectedElement.className.baseVal = elementClasses.join(' ');
+				console.log('Updated SVG className to:', $selectedElement.className.baseVal);
 			}
 			onPropertyChange('className', elementClasses.join(' '));
 			syncHTMLSource();
@@ -103,13 +169,20 @@
 	 * @param {string} className
 	 */
 	function removeClass(className) {
+		console.log('removeClass called with:', className);
+		console.log('selectedElement:', $selectedElement);
+		
 		if ($selectedElement) {
 			elementClasses = elementClasses.filter((c) => c !== className);
+			console.log('classes after removal:', elementClasses);
+			
 			// Handle both regular elements and SVG elements
 			if (typeof $selectedElement.className === 'string') {
 				$selectedElement.className = elementClasses.join(' ');
+				console.log('Updated className to:', $selectedElement.className);
 			} else if ($selectedElement.className?.baseVal !== undefined) {
 				$selectedElement.className.baseVal = elementClasses.join(' ');
+				console.log('Updated SVG className to:', $selectedElement.className.baseVal);
 			}
 			onPropertyChange('className', elementClasses.join(' '));
 			syncHTMLSource();
@@ -117,49 +190,188 @@
 	}
 
 	/**
-	 * Handle text content change
+	 * Handle text content change (debounced)
 	 */
-	function handleTextChange() {
+	const debouncedTextChange = debounce(() => {
+		console.log('📝 debouncedTextChange called');
+		console.log('📝 textContent value:', textContent);
+		console.log('📝 selectedElement:', $selectedElement);
+		
 		if ($selectedElement) {
-			$selectedElement.textContent = textContent;
+			console.log('📝 Before update - element textContent:', $selectedElement.textContent);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			element.textContent = textContent;
+			
+			console.log('📝 After update - element textContent:', element.textContent);
+			onPropertyChange('textContent', textContent);
+			syncHTMLSource();
+		} else {
+			console.log('📝 No selected element!');
+		}
+	}, 300);
+
+	/**
+	 * Handle text content change on focusout (immediate)
+	 */
+	function handleTextFocusOut() {
+		console.log('📝 handleTextFocusOut called');
+		if ($selectedElement) {
+			const element = $selectedElement;
+			element.textContent = textContent;
 			onPropertyChange('textContent', textContent);
 			syncHTMLSource();
 		}
 	}
 
 	/**
-	 * Handle padding change
+	 * Handle padding change (immediate)
 	 * @param {string} side
 	 * @param {string} value
 	 */
 	function handlePaddingChange(side, value) {
+		console.log(`📏 handlePaddingChange called for ${side}:`, value);
+		console.log('📏 selectedElement:', $selectedElement);
+		console.log('📏 selectedElement.isConnected:', $selectedElement?.isConnected);
+		console.log('📏 selectedElement.ownerDocument:', $selectedElement?.ownerDocument);
+		
 		if ($selectedElement) {
 			const property = `padding${side.charAt(0).toUpperCase() + side.slice(1)}`;
-			applyStyleProperty($selectedElement, property, value);
-			onPropertyChange(property, value);
+			// Add 'px' unit if value is just a number
+			const processedValue = value && !isNaN(value) && !value.includes('px') && !value.includes('%') && !value.includes('em') && !value.includes('rem') 
+				? `${value}px` 
+				: value;
+			console.log(`📏 Setting ${property} to:`, processedValue);
+			console.log('📏 Before style:', $selectedElement.style[property]);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			applyStyleProperty(element, property, processedValue);
+			
+			console.log('📏 After style:', $selectedElement.style[property]);
+			console.log('📏 Full cssText:', $selectedElement.style.cssText);
+			
+			onPropertyChange(property, processedValue);
+			
+			// Update the local state immediately to reflect the change
+			if (side === 'top') paddingTop = processedValue;
+			else if (side === 'right') paddingRight = processedValue;
+			else if (side === 'bottom') paddingBottom = processedValue;
+			else if (side === 'left') paddingLeft = processedValue;
+			
 			syncHTMLSource();
 		}
 	}
 
 	/**
-	 * Handle width change
+	 * Handle margin change (immediate)
+	 * @param {string} side
+	 * @param {string} value
 	 */
-	function handleWidthChange() {
+	function handleMarginChange(side, value) {
+		console.log(`📐 handleMarginChange called for ${side}:`, value);
+		console.log('📐 selectedElement:', $selectedElement);
+		
 		if ($selectedElement) {
-			applyStyleProperty($selectedElement, 'width', width);
-			onPropertyChange('width', width);
+			const property = `margin${side.charAt(0).toUpperCase() + side.slice(1)}`;
+			// Add 'px' unit if value is just a number
+			const processedValue = value && !isNaN(value) && !value.includes('px') && !value.includes('%') && !value.includes('em') && !value.includes('rem') && !value.includes('auto')
+				? `${value}px` 
+				: value;
+			console.log(`📐 Setting ${property} to:`, processedValue);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			applyStyleProperty(element, property, processedValue);
+			
+			onPropertyChange(property, processedValue);
+			
+			// Update the local state immediately to reflect the change
+			if (side === 'top') marginTop = processedValue;
+			else if (side === 'right') marginRight = processedValue;
+			else if (side === 'bottom') marginBottom = processedValue;
+			else if (side === 'left') marginLeft = processedValue;
+			
 			syncHTMLSource();
 		}
 	}
 
 	/**
-	 * Handle height change
+	 * Handle width change (debounced to avoid px issue while typing)
 	 */
-	function handleHeightChange() {
-		if ($selectedElement) {
-			applyStyleProperty($selectedElement, 'height', height);
-			onPropertyChange('height', height);
+	const debouncedWidthChange = debounce(() => {
+		if ($selectedElement && width) {
+			// Add 'px' unit if value is just a number
+			const processedValue = !isNaN(width) && !width.includes('px') && !width.includes('%') && !width.includes('em') && !width.includes('rem') && !width.includes('auto') 
+				? `${width}px` 
+				: width;
+			console.log('Setting width to:', processedValue);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			applyStyleProperty(element, 'width', processedValue);
+			
+			onPropertyChange('width', processedValue);
 			syncHTMLSource();
+		}
+	}, 300);
+
+	/**
+	 * Handle width blur (immediate)
+	 */
+	function handleWidthBlur() {
+		if ($selectedElement && width) {
+			const processedValue = !isNaN(width) && !width.includes('px') && !width.includes('%') && !width.includes('em') && !width.includes('rem') && !width.includes('auto') 
+				? `${width}px` 
+				: width;
+			
+			const element = $selectedElement;
+			applyStyleProperty(element, 'width', processedValue);
+			onPropertyChange('width', processedValue);
+			syncHTMLSource();
+			
+			// Update display value
+			width = processedValue;
+		}
+	}
+
+	/**
+	 * Handle height change (debounced to avoid px issue while typing)
+	 */
+	const debouncedHeightChange = debounce(() => {
+		if ($selectedElement && height) {
+			// Add 'px' unit if value is just a number
+			const processedValue = !isNaN(height) && !height.includes('px') && !height.includes('%') && !height.includes('em') && !height.includes('rem') && !height.includes('auto') 
+				? `${height}px` 
+				: height;
+			console.log('Setting height to:', processedValue);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			applyStyleProperty(element, 'height', processedValue);
+			
+			onPropertyChange('height', processedValue);
+			syncHTMLSource();
+		}
+	}, 300);
+
+	/**
+	 * Handle height blur (immediate)
+	 */
+	function handleHeightBlur() {
+		if ($selectedElement && height) {
+			const processedValue = !isNaN(height) && !height.includes('px') && !height.includes('%') && !height.includes('em') && !height.includes('rem') && !height.includes('auto') 
+				? `${height}px` 
+				: height;
+			
+			const element = $selectedElement;
+			applyStyleProperty(element, 'height', processedValue);
+			onPropertyChange('height', processedValue);
+			syncHTMLSource();
+			
+			// Update display value
+			height = processedValue;
 		}
 	}
 
@@ -168,10 +380,19 @@
 	 * @param {any} selected
 	 */
 	function handleDisplayChange(selected) {
+		console.log('Display change:', selected);
 		if ($selectedElement && selected?.value) {
-			display = selected.value;
-			applyStyleProperty($selectedElement, 'display', display);
-			onPropertyChange('display', display);
+			const newDisplay = selected.value;
+			console.log('Setting display to:', newDisplay);
+			
+			// Store element reference before applying changes
+			const element = $selectedElement;
+			applyStyleProperty(element, 'display', newDisplay);
+			
+			// Update local state immediately
+			display = newDisplay;
+			
+			onPropertyChange('display', newDisplay);
 			syncHTMLSource();
 		}
 	}
@@ -198,7 +419,7 @@
 					<Input
 						id="element-id"
 						bind:value={elementId}
-						on:blur={handleIdChange}
+						oninput={handleIdChange}
 						placeholder="element-id"
 					/>
 				</div>
@@ -209,12 +430,12 @@
 					<div class="flex gap-2">
 						<Input
 							bind:value={newClass}
-							on:keydown={(e) => e.key === 'Enter' && addClass()}
+							onkeydown={(e) => e.key === 'Enter' && addClass()}
 							placeholder="Add class"
 							class="flex-1"
 						/>
 						<button
-							on:click={addClass}
+							onclick={addClass}
 							class="px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
 						>
 							Add
@@ -222,10 +443,15 @@
 					</div>
 					<div class="flex flex-wrap gap-2 mt-2">
 						{#each elementClasses as className}
-							<Badge variant="secondary" class="cursor-pointer" on:click={() => removeClass(className)}>
+							<div class="inline-flex items-center bg-secondary text-secondary-foreground px-2 py-1 rounded-md text-sm">
 								{className}
-								<span class="ml-1">×</span>
-							</Badge>
+								<button 
+									onclick={() => removeClass(className)}
+									class="ml-2 text-secondary-foreground hover:text-destructive"
+								>
+									×
+								</button>
+							</div>
 						{/each}
 					</div>
 				</div>
@@ -237,7 +463,8 @@
 						<Textarea
 							id="text-content"
 							bind:value={textContent}
-							on:blur={handleTextChange}
+							oninput={debouncedTextChange}
+							onblur={handleTextFocusOut}
 							placeholder="Element text"
 							rows={3}
 						/>
@@ -251,12 +478,14 @@
 
 				<!-- Padding -->
 				<div class="space-y-2">
-					<Label>Padding</Label>
+					<Label class="flex items-center gap-2">
+						<span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">Padding</span>
+					</Label>
 					<div class="grid grid-cols-2 gap-2">
 						<div>
 							<Input
 								bind:value={paddingTop}
-								on:blur={() => handlePaddingChange('top', paddingTop)}
+								oninput={() => handlePaddingChange('top', paddingTop)}
 								placeholder="Top"
 								class="text-sm"
 							/>
@@ -264,7 +493,7 @@
 						<div>
 							<Input
 								bind:value={paddingRight}
-								on:blur={() => handlePaddingChange('right', paddingRight)}
+								oninput={() => handlePaddingChange('right', paddingRight)}
 								placeholder="Right"
 								class="text-sm"
 							/>
@@ -272,7 +501,7 @@
 						<div>
 							<Input
 								bind:value={paddingBottom}
-								on:blur={() => handlePaddingChange('bottom', paddingBottom)}
+								oninput={() => handlePaddingChange('bottom', paddingBottom)}
 								placeholder="Bottom"
 								class="text-sm"
 							/>
@@ -280,7 +509,48 @@
 						<div>
 							<Input
 								bind:value={paddingLeft}
-								on:blur={() => handlePaddingChange('left', paddingLeft)}
+								oninput={() => handlePaddingChange('left', paddingLeft)}
+								placeholder="Left"
+								class="text-sm"
+							/>
+						</div>
+					</div>
+				</div>
+
+				<!-- Margin -->
+				<div class="space-y-2">
+					<Label class="flex items-center gap-2">
+						<span class="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">Margin</span>
+					</Label>
+					<div class="grid grid-cols-2 gap-2">
+						<div>
+							<Input
+								bind:value={marginTop}
+								oninput={() => handleMarginChange('top', marginTop)}
+								placeholder="Top"
+								class="text-sm"
+							/>
+						</div>
+						<div>
+							<Input
+								bind:value={marginRight}
+								oninput={() => handleMarginChange('right', marginRight)}
+								placeholder="Right"
+								class="text-sm"
+							/>
+						</div>
+						<div>
+							<Input
+								bind:value={marginBottom}
+								oninput={() => handleMarginChange('bottom', marginBottom)}
+								placeholder="Bottom"
+								class="text-sm"
+							/>
+						</div>
+						<div>
+							<Input
+								bind:value={marginLeft}
+								oninput={() => handleMarginChange('left', marginLeft)}
 								placeholder="Left"
 								class="text-sm"
 							/>
@@ -295,7 +565,8 @@
 						<Input
 							id="width"
 							bind:value={width}
-							on:blur={handleWidthChange}
+							oninput={debouncedWidthChange}
+							onblur={handleWidthBlur}
 							placeholder="auto"
 						/>
 					</div>
@@ -304,7 +575,8 @@
 						<Input
 							id="height"
 							bind:value={height}
-							on:blur={handleHeightChange}
+							oninput={debouncedHeightChange}
+							onblur={handleHeightBlur}
 							placeholder="auto"
 						/>
 					</div>
@@ -313,9 +585,12 @@
 				<!-- Display -->
 				<div class="space-y-2">
 					<Label>Display</Label>
-					<Select.Root onSelectedChange={handleDisplayChange}>
+					<Select.Root 
+						selected={{ value: display, label: display || 'Select display' }} 
+						onSelectedChange={handleDisplayChange}
+					>
 						<Select.Trigger class="w-full">
-							<span>{display || 'Select display'}</span>
+							<Select.Value placeholder="Select display" />
 						</Select.Trigger>
 						<Select.Content>
 							<Select.Item value="block">Block</Select.Item>
