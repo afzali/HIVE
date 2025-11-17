@@ -377,12 +377,11 @@
 
 	/**
 	 * Handle display change
-	 * @param {any} selected
+	 * @param {string} newDisplay
 	 */
-	function handleDisplayChange(selected) {
-		console.log('Display change:', selected);
-		if ($selectedElement && selected?.value) {
-			const newDisplay = selected.value;
+	function handleDisplayChange(newDisplay) {
+		console.log('Display change:', newDisplay);
+		if ($selectedElement && newDisplay) {
 			console.log('Setting display to:', newDisplay);
 			
 			// Store element reference before applying changes
@@ -585,9 +584,9 @@
 				<!-- Display -->
 				<div class="space-y-2">
 					<Label>Display</Label>
-					<Select.Root 
-						selected={{ value: display, label: display || 'Select display' }} 
-						onSelectedChange={handleDisplayChange}
+					<Select.Root type="single"
+						value={display}
+						onValueChange={handleDisplayChange}
 					>
 						<Select.Trigger class="w-full">
 							<Select.Value placeholder="Select display" />
