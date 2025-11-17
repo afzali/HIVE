@@ -21,8 +21,10 @@
 	 * @param {string} mode
 	 */
 	function handleModeChange(mode) {
-		console.log('handleModeChange called with:', mode);
+		console.log('FloatingButton: handleModeChange called with:', mode);
+		console.log('FloatingButton: Setting currentMode to:', mode);
 		currentMode.set(mode);
+		console.log('FloatingButton: currentMode set, calling onModeChange');
 		onModeChange(mode);
 		isOpen = false;
 	}
