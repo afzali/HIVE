@@ -12,10 +12,12 @@ export function overlayAction(iframe, options = {}) {
 	let iframeDoc = null;
 	let overlayDiv = null;
 	let highlightDiv = null;
+	let hoverDiv = null;
 	let labelDiv = null;
 	let unsubscribe = null;
 	let modeUnsubscribe = null;
 	let isEditMode = false;
+	let hoveredElement = null;
 
 	const { onElementSelect = () => {} } = options;
 
@@ -44,6 +46,53 @@ export function overlayAction(iframe, options = {}) {
 		labelDiv.style.transform = `translate(${box.left}px, ${Math.max(0, box.top - 24)}px)`;
 	}
 
+	function handleMouseMove(event) {
+		// Only handle in edit mode
+		if (!isEditMode || !hoverDiv) return;
+
+		const target = event.target;
+
+		// Ignore overlay elements
+		if (target === overlayDiv || target === highlightDiv || target === hoverDiv || 
+		    target === labelDiv || target?.closest?.('.hive-label')) {
+			return;
+		}
+
+		// Ignore HTML and BODY
+		if (!target || target.tagName === 'HTML' || target.tagName === 'BODY') {
+			if (hoverDiv.style.display !== 'none') {
+				hoverDiv.style.display = 'none';
+				hoveredElement = null;
+			}
+			return;
+		}
+
+		// Update hover if element changed
+		if (target !== hoveredElement) {
+			hoveredElement = target;
+
+			// Don't show hover for selected element
+			if (target === get(selectedElement)) {
+				hoverDiv.style.display = 'none';
+			} else {
+				const box = calculateHighlightBox(target);
+				if (box) {
+					hoverDiv.style.display = 'block';
+					hoverDiv.style.transform = `translate(${box.left}px, ${box.top}px)`;
+					hoverDiv.style.width = `${box.width}px`;
+					hoverDiv.style.height = `${box.height}px`;
+				}
+			}
+		}
+	}
+
+	function handleMouseLeave() {
+		if (hoverDiv) {
+			hoverDiv.style.display = 'none';
+			hoveredElement = null;
+		}
+	}
+
 	function handleClick(event) {
 		// Only handle clicks in edit mode
 		if (!isEditMode) return;
@@ -56,8 +105,8 @@ export function overlayAction(iframe, options = {}) {
 			iframe.dispatchEvent(new CustomEvent('close-context-menu'));
 		}
 
-		if (target === overlayDiv || target === highlightDiv || target === labelDiv || 
-		    target?.closest?.('.hive-label')) {
+		if (target === overlayDiv || target === highlightDiv || target === hoverDiv || 
+		    target === labelDiv || target?.closest?.('.hive-label')) {
 			return;
 		}
 
@@ -132,16 +181,23 @@ export function overlayAction(iframe, options = {}) {
 		highlightDiv.className = 'hive-highlight';
 		highlightDiv.style.display = 'none';
 
+		hoverDiv = iframeDoc.createElement('div');
+		hoverDiv.className = 'hive-hover';
+		hoverDiv.style.display = 'none';
+
 		labelDiv = iframeDoc.createElement('div');
 		labelDiv.className = 'hive-label';
 		labelDiv.style.display = 'none';
 
 		iframeDoc.body.appendChild(overlayDiv);
+		iframeDoc.body.appendChild(hoverDiv);
 		iframeDoc.body.appendChild(highlightDiv);
 		iframeDoc.body.appendChild(labelDiv);
 
 		iframeDoc.body.addEventListener('click', handleClick);
 		iframeDoc.body.addEventListener('contextmenu', handleContextMenu);
+		iframeDoc.body.addEventListener('mousemove', handleMouseMove);
+		iframeDoc.body.addEventListener('mouseleave', handleMouseLeave);
 		iframeDoc.defaultView?.addEventListener('scroll', updateHighlight, true);
 		iframeDoc.defaultView?.addEventListener('resize', updateHighlight);
 
@@ -150,8 +206,9 @@ export function overlayAction(iframe, options = {}) {
 			isEditMode = mode === 'edit';
 			
 			// Hide highlights when not in edit mode
-			if (!isEditMode && highlightDiv && labelDiv) {
+			if (!isEditMode && highlightDiv && hoverDiv && labelDiv) {
 				highlightDiv.style.display = 'none';
+				hoverDiv.style.display = 'none';
 				labelDiv.style.display = 'none';
 			}
 		});
@@ -236,11 +293,14 @@ export function overlayAction(iframe, options = {}) {
 
 		iframeDoc.body?.removeEventListener('click', handleClick);
 		iframeDoc.body?.removeEventListener('contextmenu', handleContextMenu);
+		iframeDoc.body?.removeEventListener('mousemove', handleMouseMove);
+		iframeDoc.body?.removeEventListener('mouseleave', handleMouseLeave);
 		iframeDoc.defaultView?.removeEventListener('scroll', updateHighlight, true);
 		iframeDoc.defaultView?.removeEventListener('resize', updateHighlight);
 		
 		overlayDiv?.remove();
 		highlightDiv?.remove();
+		hoverDiv?.remove();
 		labelDiv?.remove();
 	}
 

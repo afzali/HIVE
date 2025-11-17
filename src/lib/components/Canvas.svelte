@@ -96,6 +96,18 @@
 					z-index: 999999;
 					pointer-events: none;
 				}
+				.hive-hover {
+					position: fixed;
+					top: 0;
+					left: 0;
+					border: 2px dashed #4ade80;
+					pointer-events: none;
+					transition: transform 50ms ease-out, width 50ms, height 50ms;
+					box-sizing: border-box;
+					background: rgba(74, 222, 128, 0.05);
+					z-index: 999998;
+					will-change: transform;
+				}
 				.hive-highlight {
 					position: fixed;
 					top: 0;

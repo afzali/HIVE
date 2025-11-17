@@ -21,6 +21,9 @@
 	/** @type {import('$lib/types.js').HighlightBox|null} */
 	let highlightBox = null;
 
+	/** @type {import('$lib/types.js').HighlightBox|null} */
+	let hoverBox = null;
+
 	/** @type {HTMLElement|null} */
 	let hoveredElement = null;
 
@@ -129,12 +132,36 @@
 		try {
 			const element = iframeDocument.elementFromPoint(relativeX, relativeY);
 
-			if (element && element !== hoveredElement && element.tagName !== 'HTML' && element.tagName !== 'BODY') {
-				hoveredElement = element;
+			if (element && element.tagName !== 'HTML' && element.tagName !== 'BODY') {
+				// Always update hover if element changed
+				if (element !== hoveredElement) {
+					hoveredElement = element;
+					
+					// Don't show hover box if element is already selected
+					if (element !== $selectedElement) {
+						hoverBox = calculateHighlightBox(element);
+						console.log('🟢 Hover box set:', hoverBox, 'for element:', element.tagName);
+					} else {
+						hoverBox = null;
+						console.log('🔵 Hover cleared (element is selected)');
+					}
+				}
+			} else if (hoverBox) {
+				// Clear hover if no valid element
+				hoverBox = null;
+				hoveredElement = null;
 			}
 		} catch (error) {
 			// Ignore errors during hover
 		}
+	}
+
+	/**
+	 * Handle mouse leave to clear hover
+	 */
+	function handleMouseLeave() {
+		hoveredElement = null;
+		hoverBox = null;
 	}
 
 	// Update highlight when selected element changes
@@ -152,15 +179,24 @@
 <!-- svelte-ignore a11y_no_static_element_interactions -->
 <div
 	class="absolute top-0 left-0 w-full h-full z-40 cursor-crosshair pointer-events-auto"
-	on:click={handleClick}
-	on:contextmenu={handleContextMenu}
-	on:mousemove={handleMouseMove}
+	onclick={handleClick}
+	oncontextmenu={handleContextMenu}
+	onmousemove={handleMouseMove}
+	onmouseleave={handleMouseLeave}
 >
+	{#if hoverBox && hoveredElement !== $selectedElement}
+		<!-- Hover highlight border (green, dashed, lighter) -->
+		<div
+			class="absolute border-2 border-dashed border-green-400 pointer-events-none transition-all duration-75 box-border"
+			style="top: {hoverBox.top}px; left: {hoverBox.left}px; width: {hoverBox.width}px; height: {hoverBox.height}px; background-color: rgba(74, 222, 128, 0.05);"
+		></div>
+	{/if}
+
 	{#if highlightBox}
-		<!-- Highlight border -->
+		<!-- Selected element highlight border (blue, solid, brighter) -->
 		<div
 			class="absolute border-2 border-blue-500 pointer-events-none transition-all duration-100 box-border"
-			style="top: {highlightBox.top}px; left: {highlightBox.left}px; width: {highlightBox.width}px; height: {highlightBox.height}px;"
+			style="top: {highlightBox.top}px; left: {highlightBox.left}px; width: {highlightBox.width}px; height: {highlightBox.height}px; background-color: rgba(59, 130, 246, 0.1);"
 		></div>
 		
 		<!-- Label with hive-id and menu button -->
@@ -170,7 +206,7 @@
 		>
 			<span class="font-mono text-[10px]">{getHiveId($selectedElement)}</span>
 			<button
-				on:click|stopPropagation={() => {
+				onclick={() => {
 					showContextMenu = true;
 					contextMenuPosition = {
 						x: highlightBox.left + 100,
@@ -212,4 +248,4 @@
 {/if}
 
 <!-- Click outside to close context menu -->
-<svelte:window on:click={() => (showContextMenu = false)} />
+<svelte:window onclick={() => (showContextMenu = false)} />
