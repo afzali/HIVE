@@ -1,6 +1,7 @@
 <script>
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
+	import CustomSizeDialog from '$lib/components/CustomSizeDialog.svelte';
 	import { currentMode, viewportSize, layersPanelOpen, editToolbarOpen } from '$lib/stores.js';
 	import { VIEWPORT_PRESETS } from '$lib/types.js';
 	import { 
@@ -35,6 +36,9 @@
 	/** @type {boolean} */
 	let assetsPanelOpen = false;
 
+	/** @type {boolean} */
+	let customSizeDialogOpen = false;
+
 	/**
 	 * Handle mode selection
 	 * @param {string} mode
@@ -53,6 +57,12 @@
 	 * @param {import('$lib/types.js').ViewportPreset} preset
 	 */
 	function handleResponsiveChange(preset) {
+		if (preset === 'custom') {
+			// Open custom size dialog
+			customSizeDialogOpen = true;
+			return;
+		}
+		
 		const size = {
 			preset,
 			width: VIEWPORT_PRESETS[preset].width,
@@ -113,6 +123,14 @@
 		// Close toolbar and go to preview mode
 		editToolbarOpen.set(false);
 		currentMode.set('preview');
+	}
+
+	/**
+	 * Handle custom size change from dialog
+	 * @param {import('$lib/types.js').ViewportSize} size
+	 */
+	function handleCustomSizeChange(size) {
+		onResponsiveModeChange(size);
 	}
 </script>
 
@@ -229,7 +247,7 @@
 
 						<DropdownMenu.Item onclick={() => handleResponsiveChange('custom')}>
 							<Settings class="w-4 h-4 mr-2" />
-							Custom Size
+							Custom Size...
 							{#if $viewportSize.preset === 'custom'}
 								<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
@@ -280,3 +298,9 @@
 {/if}
 
 
+
+<!-- Custom Size Dialog -->
+<CustomSizeDialog 
+	bind:isOpen={customSizeDialogOpen}
+	onSizeChange={handleCustomSizeChange}
+/>

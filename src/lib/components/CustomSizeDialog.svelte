@@ -61,14 +61,14 @@
 	></div>
 
 	<!-- Dialog -->
-	<div class="fixed top-8 left-1/2 transform -translate-x-1/2 z-[71] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-lg shadow-2xl p-6 min-w-80">
+	<div class="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-[71] bg-gray-900/95 backdrop-blur-sm border border-gray-700/50 rounded-xl shadow-2xl p-6 w-[420px]">
 		<!-- Header -->
-		<div class="flex items-center justify-between mb-4">
+		<div class="flex items-center justify-between mb-6">
 			<h3 class="text-lg font-semibold text-white">Custom Viewport Size</h3>
 			<Button
 				variant="ghost"
 				size="sm"
-				class="w-6 h-6 p-0 text-gray-400 hover:text-white"
+				class="w-8 h-8 p-0 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg"
 				onclick={cancel}
 			>
 				<X class="w-4 h-4" />
@@ -76,98 +76,94 @@
 		</div>
 
 		<!-- Form -->
-		<div class="space-y-4">
+		<div class="space-y-5">
 			<div class="grid grid-cols-2 gap-4">
 				<div class="space-y-2">
-					<Label for="custom-width" class="text-sm text-gray-300">Width (px)</Label>
+					<Label for="custom-width" class="text-sm font-medium text-gray-300">Width (px)</Label>
 					<Input
 						id="custom-width"
 						type="number"
 						bind:value={customWidth}
 						min="200"
 						max="4000"
-						class="bg-gray-800 border-gray-600 text-white"
+						class="bg-gray-800 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500"
 						placeholder="800"
 					/>
 				</div>
 				<div class="space-y-2">
-					<Label for="custom-height" class="text-sm text-gray-300">Height (px)</Label>
+					<Label for="custom-height" class="text-sm font-medium text-gray-300">Height (px)</Label>
 					<Input
 						id="custom-height"
 						type="number"
 						bind:value={customHeight}
 						min="200"
 						max="3000"
-						class="bg-gray-800 border-gray-600 text-white"
+						class="bg-gray-800 border-gray-600 text-white focus:border-blue-500 focus:ring-blue-500"
 						placeholder="600"
 					/>
 				</div>
 			</div>
 
 			<!-- Common Presets -->
-			<div class="space-y-2">
-				<Label class="text-sm text-gray-300">Quick Presets</Label>
+			<div class="space-y-3">
+				<Label class="text-sm font-medium text-gray-300">Quick Presets</Label>
 				<div class="grid grid-cols-2 gap-2">
-					<Button
-						variant="outline"
-						size="sm"
-						class="text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+					<button
+						type="button"
+						class="px-3 py-2 text-xs bg-gray-800 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 hover:text-white hover:border-gray-500 transition-colors"
 						onclick={() => {
 							customWidth = 1366;
 							customHeight = 768;
 						}}
 					>
 						1366×768
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						class="text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+					</button>
+					<button
+						type="button"
+						class="px-3 py-2 text-xs bg-gray-800 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 hover:text-white hover:border-gray-500 transition-colors"
 						onclick={() => {
 							customWidth = 1440;
 							customHeight = 900;
 						}}
 					>
 						1440×900
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						class="text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+					</button>
+					<button
+						type="button"
+						class="px-3 py-2 text-xs bg-gray-800 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 hover:text-white hover:border-gray-500 transition-colors"
 						onclick={() => {
 							customWidth = 1024;
 							customHeight = 768;
 						}}
 					>
 						1024×768
-					</Button>
-					<Button
-						variant="outline"
-						size="sm"
-						class="text-xs border-gray-600 text-gray-300 hover:bg-gray-800"
+					</button>
+					<button
+						type="button"
+						class="px-3 py-2 text-xs bg-gray-800 border border-gray-600 text-gray-300 rounded-md hover:bg-gray-700 hover:text-white hover:border-gray-500 transition-colors"
 						onclick={() => {
 							customWidth = 414;
 							customHeight = 896;
 						}}
 					>
 						iPhone 11
-					</Button>
+					</button>
 				</div>
 			</div>
 
 			<!-- Actions -->
-			<div class="flex items-center justify-end gap-2 pt-2">
+			<div class="flex items-center justify-end gap-3 pt-4 border-t border-gray-700/50">
 				<Button
 					variant="outline"
 					size="sm"
-					class="border-gray-600 text-gray-300 hover:bg-gray-800"
+					class="border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white hover:border-gray-500"
 					onclick={cancel}
 				>
 					Cancel
 				</Button>
 				<Button
 					size="sm"
-					class="bg-blue-600 hover:bg-blue-700 text-white"
+					class="bg-blue-600 hover:bg-blue-700 text-white px-6"
 					onclick={applyCustomSize}
 				>
 					Apply
