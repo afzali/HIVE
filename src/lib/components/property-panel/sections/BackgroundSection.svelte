@@ -93,7 +93,7 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-medium">Background</h3>
+	<h3 class="text-sm font-medium"></h3>
 	
 	<div class="space-y-2">
 		<Label for="background-color">Background Color</Label>

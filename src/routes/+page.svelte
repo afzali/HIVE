@@ -4,6 +4,7 @@
 	import PropertyPanel from '$lib/components/PropertyPanel.svelte';
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
+	import LayersPanel from '$lib/components/LayersPanel.svelte';
 	import { htmlSource, currentMode, viewportSize, iframeDocument, selectedElement } from '$lib/stores.js';
 	import { history } from '$lib/history.js';
 
@@ -284,7 +285,8 @@
 		</div>
 	{/if}
 	
-
+	<!-- Layers Panel -->
+	<LayersPanel />
 	
 	<!-- Floating Button -->
 	<FloatingButton 

@@ -240,7 +240,7 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-medium">Typography</h3>
+	<h3 class="text-sm font-medium"></h3>
 	
 	<!-- Font Size -->
 	<div class="space-y-2">

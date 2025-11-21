@@ -166,7 +166,7 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-medium">Spacing</h3>
+	<h3 class="text-sm font-medium"></h3>
 	
 	<!-- Visual Box Model -->
 	<div class="relative bg-orange-50 border-2 border-dashed border-orange-200 p-4 rounded-lg">
@@ -182,7 +182,7 @@
 					bind:value={marginTop}
 					oninput={() => handleMarginChange('top', marginTop)}
 					placeholder="0"
-					class="w-12 h-6 text-xs text-center"
+					class="w-14 h-6 text-xs text-center"
 					type="number"
 				/>
 			</div>
@@ -196,7 +196,7 @@
 					bind:value={marginLeft}
 					oninput={() => handleMarginChange('left', marginLeft)}
 					placeholder="0"
-					class="w-12 h-6 text-xs text-center"
+					class="w-14 h-6 text-xs text-center"
 					type="number"
 				/>
 			</div>
@@ -214,7 +214,7 @@
 						bind:value={paddingTop}
 						oninput={() => handlePaddingChange('top', paddingTop)}
 						placeholder="0"
-						class="w-12 h-6 text-xs text-center"
+						class="w-14 h-6 text-xs text-center"
 						type="number"
 					/>
 				</div>
@@ -225,7 +225,7 @@
 						bind:value={paddingLeft}
 						oninput={() => handlePaddingChange('left', paddingLeft)}
 						placeholder="0"
-						class="w-12 h-6 text-xs text-center"
+						class="w-14 h-6 text-xs text-center"
 						type="number"
 					/>
 					
@@ -238,7 +238,7 @@
 						bind:value={paddingRight}
 						oninput={() => handlePaddingChange('right', paddingRight)}
 						placeholder="0"
-						class="w-12 h-6 text-xs text-center"
+						class="w-14 h-6 text-xs text-center"
 						type="number"
 					/>
 				</div>
@@ -249,7 +249,7 @@
 						bind:value={paddingBottom}
 						oninput={() => handlePaddingChange('bottom', paddingBottom)}
 						placeholder="0"
-						class="w-12 h-6 text-xs text-center"
+						class="w-14 h-6 text-xs text-center"
 						type="number"
 					/>
 				</div>
@@ -261,7 +261,7 @@
 					bind:value={marginRight}
 					oninput={() => handleMarginChange('right', marginRight)}
 					placeholder="0"
-					class="w-12 h-6 text-xs text-center"
+					class="w-14 h-6 text-xs text-center"
 					type="number"
 				/>
 			</div>
@@ -274,7 +274,7 @@
 					bind:value={marginBottom}
 					oninput={() => handleMarginChange('bottom', marginBottom)}
 					placeholder="0"
-					class="w-12 h-6 text-xs text-center"
+					class="w-14 h-6 text-xs text-center"
 					type="number"
 				/>
 			</div>

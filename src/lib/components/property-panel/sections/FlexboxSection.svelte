@@ -137,7 +137,7 @@
 
 {#if display === 'flex'}
 	<div class="space-y-4">
-		<h3 class="text-sm font-medium">Flexbox</h3>
+		<h3 class="text-sm font-medium"></h3>
 		
 		<div class="grid grid-cols-2 gap-2">
 			<div class="space-y-2">

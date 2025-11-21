@@ -128,7 +128,7 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-medium">Dimensions</h3>
+	<h3 class="text-sm font-medium"></h3>
 	
 	<!-- Width -->
 	<div class="space-y-2">

@@ -135,7 +135,7 @@
 </script>
 
 <div class="space-y-4">
-	<h3 class="text-sm font-medium">HTML Attributes</h3>
+	<h3 class="text-sm font-medium"></h3>
 
 	<!-- ID -->
 	<div class="space-y-2">
