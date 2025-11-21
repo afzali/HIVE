@@ -3,6 +3,7 @@
 	import { selectedElement } from '$lib/stores.js';
 	import { debounce } from '$lib/dom-utils.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
+	import { configureMonacoSimple } from '$lib/monaco-config.js';
 
 	/**
 	 * @type {function(string, any): void} onPropertyChange
@@ -26,6 +27,9 @@
 		if (monaco || editorLoaded) return;
 		
 		try {
+			// Configure Monaco Environment first
+			configureMonacoSimple();
+			
 			const monacoModule = await import('monaco-editor');
 			monaco = monacoModule.default || monacoModule;
 			editorLoaded = true;
@@ -53,11 +57,36 @@
 				tabSize: 2,
 				insertSpaces: true,
 				formatOnPaste: true,
-				formatOnType: true
+				formatOnType: true,
+				// Disable features that use workers
+				colorDecorators: false,
+				links: false,
+				hover: { enabled: false },
+				suggest: { showWords: false },
+				quickSuggestions: false,
+				parameterHints: { enabled: false },
+				codeLens: false,
+				folding: false,
+				foldingHighlight: false,
+				unfoldOnClickAfterEndOfLine: false,
+				showUnused: false
 			});
 			
+			// Track when user starts editing
+			htmlMonacoEditor.onDidFocusEditorText(() => {
+				isUserEditing = true;
+			});
+
+			// Track when user stops editing (with delay)
+			htmlMonacoEditor.onDidBlurEditorText(() => {
+				setTimeout(() => {
+					isUserEditing = false;
+				}, 1000); // Wait 1 second after blur before allowing updates
+			});
+
 			htmlMonacoEditor.onDidChangeModelContent(() => {
 				htmlEditorContent = htmlMonacoEditor.getValue();
+				isUserEditing = true; // Mark as editing when content changes
 				debouncedApplyHTMLChanges();
 			});
 		} catch (error) {
@@ -126,8 +155,13 @@
 		}
 	}
 
-	// Watch for element changes to update HTML editor
-	$: if ($selectedElement && htmlMonacoEditor) {
+	// Track the last processed element to avoid unnecessary updates
+	let lastProcessedElement = null;
+	let isUserEditing = false;
+
+	// Watch for element changes to update HTML editor (only when not editing)
+	$: if ($selectedElement && htmlMonacoEditor && $selectedElement !== lastProcessedElement && !isUserEditing) {
+		lastProcessedElement = $selectedElement;
 		htmlEditorContent = extractElementHTML();
 		htmlMonacoEditor.setValue(htmlEditorContent);
 	}
