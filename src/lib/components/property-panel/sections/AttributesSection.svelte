@@ -2,6 +2,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import { Textarea } from '$lib/components/ui/textarea';
+	import { AutocompleteInput } from '$lib/components/ui/autocomplete-input';
 	import { selectedElement } from '$lib/stores.js';
 	import { debounce } from '$lib/dom-utils.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
@@ -19,9 +20,26 @@
 	let newClass = '';
 	/** @type {string} */
 	let textContent = '';
+	/** @type {string[]} */
+	let tailwindClasses = [];
 
 	// Track the last processed element to avoid reactive loops
 	let lastProcessedElement = null;
+
+	// Load Tailwind classes on component mount
+	async function loadTailwindClasses() {
+		try {
+			const response = await fetch('/classes.json');
+			if (response.ok) {
+				tailwindClasses = await response.json();
+			}
+		} catch (error) {
+			console.warn('Could not load Tailwind classes:', error);
+		}
+	}
+
+	// Load classes when component mounts
+	loadTailwindClasses();
 
 	/**
 	 * Update local state when selected element changes
@@ -57,9 +75,9 @@
 	/**
 	 * Add a new class
 	 */
-	function addClass() {
-		if (newClass && $selectedElement && !elementClasses.includes(newClass)) {
-			elementClasses = [...elementClasses, newClass];
+	function addClass(className = newClass) {
+		if (className && $selectedElement && !elementClasses.includes(className)) {
+			elementClasses = [...elementClasses, className];
 			
 			// Handle both regular elements and SVG elements
 			if (typeof $selectedElement.className === 'string') {
@@ -134,14 +152,16 @@
 	<div class="space-y-2">
 		<Label>Classes</Label>
 		<div class="flex gap-2">
-			<Input
+			<AutocompleteInput
 				bind:value={newClass}
+				suggestions={tailwindClasses}
+				onSelect={(className) => addClass(className)}
 				onkeydown={(e) => e.key === 'Enter' && addClass()}
-				placeholder="Add class"
+				placeholder="Add Tailwind class"
 				class="flex-1"
 			/>
 			<button
-				onclick={addClass}
+				onclick={() => addClass()}
 				class="px-3 py-2 bg-primary text-primary-foreground rounded-md hover:bg-primary/90"
 			>
 				Add

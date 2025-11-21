@@ -29,8 +29,29 @@
 	/** @type {string} */
 	let color = '';
 
+	// Unit selectors
+	/** @type {string} */
+	let fontSizeUnit = 'px';
+	/** @type {string} */
+	let lineHeightUnit = 'px';
+	/** @type {string} */
+	let letterSpacingUnit = 'px';
+
 	// Track the last processed element to avoid reactive loops
 	let lastProcessedElement = null;
+
+	/**
+	 * Extract numeric value and unit from CSS value
+	 */
+	function parseValue(value) {
+		if (!value || value === 'normal' || value === 'auto') return { number: '', unit: 'px' };
+		if (value === '0') return { number: '0', unit: 'px' };
+		const match = value.match(/^(-?\d*\.?\d+)(.*)$/);
+		if (match) {
+			return { number: match[1], unit: match[2] || 'px' };
+		}
+		return { number: '', unit: 'px' };
+	}
 
 	/**
 	 * Update local state when selected element changes
@@ -49,10 +70,27 @@
 		};
 		
 		fontFamily = getStyleValue(element.style.fontFamily, styles.fontFamily);
-		fontSize = getStyleValue(element.style.fontSize, styles.fontSize);
+		
+		// Parse font size
+		const fontSizeValue = getStyleValue(element.style.fontSize, styles.fontSize);
+		const fsParsed = parseValue(fontSizeValue);
+		fontSize = fsParsed.number;
+		fontSizeUnit = fsParsed.unit;
+		
 		fontWeight = getStyleValue(element.style.fontWeight, styles.fontWeight);
-		lineHeight = getStyleValue(element.style.lineHeight, styles.lineHeight);
-		letterSpacing = getStyleValue(element.style.letterSpacing, styles.letterSpacing);
+		
+		// Parse line height
+		const lineHeightValue = getStyleValue(element.style.lineHeight, styles.lineHeight);
+		const lhParsed = parseValue(lineHeightValue);
+		lineHeight = lhParsed.number;
+		lineHeightUnit = lhParsed.unit;
+		
+		// Parse letter spacing
+		const letterSpacingValue = getStyleValue(element.style.letterSpacing, styles.letterSpacing);
+		const lsParsed = parseValue(letterSpacingValue);
+		letterSpacing = lsParsed.number;
+		letterSpacingUnit = lsParsed.unit;
+		
 		textAlign = getStyleValue(element.style.textAlign, styles.textAlign);
 		textDecoration = getStyleValue(element.style.textDecoration, styles.textDecoration);
 		
@@ -75,6 +113,19 @@
 		handleStyleChange('textAlign', textAlign);
 	}
 
+	// Watch for unit changes
+	$: if (fontSizeUnit) {
+		handleUnitChange('fontSize', fontSizeUnit);
+	}
+
+	$: if (lineHeightUnit) {
+		handleUnitChange('lineHeight', lineHeightUnit);
+	}
+
+	$: if (letterSpacingUnit) {
+		handleUnitChange('letterSpacing', letterSpacingUnit);
+	}
+
 	/**
 	 * Handle style change
 	 */
@@ -84,6 +135,36 @@
 			applyStyleProperty(element, property, value);
 			onPropertyChange(property, value);
 			syncHTMLSource();
+		}
+	}
+
+	/**
+	 * Handle typography dimension change
+	 */
+	function handleTypographyChange(property, value, unit) {
+		if ($selectedElement && value !== '') {
+			const processedValue = value === '0' ? '0' : unit === 'normal' ? 'normal' : `${value}${unit}`;
+			
+			const element = $selectedElement;
+			applyStyleProperty(element, property, processedValue);
+			onPropertyChange(property, processedValue);
+			syncHTMLSource();
+		}
+	}
+
+	/**
+	 * Handle unit change
+	 */
+	function handleUnitChange(property, unit) {
+		if (property === 'fontSize') {
+			fontSizeUnit = unit;
+			if (fontSize !== '') handleTypographyChange('fontSize', fontSize, unit);
+		} else if (property === 'lineHeight') {
+			lineHeightUnit = unit;
+			if (lineHeight !== '') handleTypographyChange('lineHeight', lineHeight, unit);
+		} else if (property === 'letterSpacing') {
+			letterSpacingUnit = unit;
+			if (letterSpacing !== '') handleTypographyChange('letterSpacing', letterSpacing, unit);
 		}
 	}
 
@@ -161,55 +242,104 @@
 <div class="space-y-4">
 	<h3 class="text-sm font-medium">Typography</h3>
 	
-	<div class="grid grid-cols-2 gap-2">
-		<div class="space-y-2">
-			<Label for="font-size">Font Size</Label>
+	<!-- Font Size -->
+	<div class="space-y-2">
+		<Label class="text-xs">Font Size</Label>
+		<div class="flex gap-2">
 			<Input
-				id="font-size"
 				bind:value={fontSize}
-				oninput={() => handleStyleChange('fontSize', fontSize)}
-				placeholder="16px"
+				oninput={() => handleTypographyChange('fontSize', fontSize, fontSizeUnit)}
+				placeholder="16"
+				class="flex-1"
+				type="number"
 			/>
-		</div>
-		<div class="space-y-2">
-			<Label>Font Weight</Label>
-			<Select.Root type="single" bind:value={fontWeight}>
-				<Select.Trigger class="w-full">
-					{fontWeight ? `${fontWeight} - ${getFontWeightLabel(fontWeight)}` : 'Normal'}
+			<Select.Root type="single" bind:value={fontSizeUnit}>
+				<Select.Trigger class="w-20 h-9 text-xs">
+					{fontSizeUnit}
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="100" label="100 - Thin">100 - Thin</Select.Item>
-					<Select.Item value="200" label="200 - Extra Light">200 - Extra Light</Select.Item>
-					<Select.Item value="300" label="300 - Light">300 - Light</Select.Item>
-					<Select.Item value="400" label="400 - Normal">400 - Normal</Select.Item>
-					<Select.Item value="500" label="500 - Medium">500 - Medium</Select.Item>
-					<Select.Item value="600" label="600 - Semi Bold">600 - Semi Bold</Select.Item>
-					<Select.Item value="700" label="700 - Bold">700 - Bold</Select.Item>
-					<Select.Item value="800" label="800 - Extra Bold">800 - Extra Bold</Select.Item>
-					<Select.Item value="900" label="900 - Black">900 - Black</Select.Item>
+					<Select.Item value="px" label="px">px</Select.Item>
+					<Select.Item value="%" label="%">%</Select.Item>
+					<Select.Item value="em" label="em">em</Select.Item>
+					<Select.Item value="rem" label="rem">rem</Select.Item>
+					<Select.Item value="pt" label="pt">pt</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>
 	</div>
 
-	<div class="grid grid-cols-2 gap-2">
-		<div class="space-y-2">
-			<Label for="line-height">Line Height</Label>
+	<!-- Font Weight -->
+	<div class="space-y-2">
+		<Label>Font Weight</Label>
+		<Select.Root type="single" bind:value={fontWeight}>
+			<Select.Trigger class="w-full">
+				{fontWeight ? `${fontWeight} - ${getFontWeightLabel(fontWeight)}` : 'Normal'}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Item value="100" label="100 - Thin">100 - Thin</Select.Item>
+				<Select.Item value="200" label="200 - Extra Light">200 - Extra Light</Select.Item>
+				<Select.Item value="300" label="300 - Light">300 - Light</Select.Item>
+				<Select.Item value="400" label="400 - Normal">400 - Normal</Select.Item>
+				<Select.Item value="500" label="500 - Medium">500 - Medium</Select.Item>
+				<Select.Item value="600" label="600 - Semi Bold">600 - Semi Bold</Select.Item>
+				<Select.Item value="700" label="700 - Bold">700 - Bold</Select.Item>
+				<Select.Item value="800" label="800 - Extra Bold">800 - Extra Bold</Select.Item>
+				<Select.Item value="900" label="900 - Black">900 - Black</Select.Item>
+			</Select.Content>
+		</Select.Root>
+	</div>
+
+	<!-- Line Height -->
+	<div class="space-y-2">
+		<Label class="text-xs">Line Height</Label>
+		<div class="flex gap-2">
 			<Input
-				id="line-height"
 				bind:value={lineHeight}
-				oninput={() => handleStyleChange('lineHeight', lineHeight)}
-				placeholder="normal"
+				oninput={() => handleTypographyChange('lineHeight', lineHeight, lineHeightUnit)}
+				placeholder="1.5"
+				class="flex-1"
+				type="number"
+				step="0.1"
 			/>
+			<Select.Root type="single" bind:value={lineHeightUnit}>
+				<Select.Trigger class="w-20 h-9 text-xs">
+					{lineHeightUnit}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="normal" label="normal">normal</Select.Item>
+					<Select.Item value="" label="unitless">unitless</Select.Item>
+					<Select.Item value="px" label="px">px</Select.Item>
+					<Select.Item value="%" label="%">%</Select.Item>
+					<Select.Item value="em" label="em">em</Select.Item>
+					<Select.Item value="rem" label="rem">rem</Select.Item>
+				</Select.Content>
+			</Select.Root>
 		</div>
-		<div class="space-y-2">
-			<Label for="letter-spacing">Letter Spacing</Label>
+	</div>
+
+	<!-- Letter Spacing -->
+	<div class="space-y-2">
+		<Label class="text-xs">Letter Spacing</Label>
+		<div class="flex gap-2">
 			<Input
-				id="letter-spacing"
 				bind:value={letterSpacing}
-				oninput={() => handleStyleChange('letterSpacing', letterSpacing)}
-				placeholder="normal"
+				oninput={() => handleTypographyChange('letterSpacing', letterSpacing, letterSpacingUnit)}
+				placeholder="0"
+				class="flex-1"
+				type="number"
+				step="0.1"
 			/>
+			<Select.Root type="single" bind:value={letterSpacingUnit}>
+				<Select.Trigger class="w-20 h-9 text-xs">
+					{letterSpacingUnit}
+				</Select.Trigger>
+				<Select.Content>
+					<Select.Item value="normal" label="normal">normal</Select.Item>
+					<Select.Item value="px" label="px">px</Select.Item>
+					<Select.Item value="em" label="em">em</Select.Item>
+					<Select.Item value="rem" label="rem">rem</Select.Item>
+				</Select.Content>
+			</Select.Root>
 		</div>
 	</div>
 

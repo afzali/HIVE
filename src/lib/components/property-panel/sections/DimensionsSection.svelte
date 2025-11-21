@@ -2,6 +2,7 @@
 	import { Input } from '$lib/components/ui/input';
 	import { Label } from '$lib/components/ui/label';
 	import * as Select from '$lib/components/ui/select';
+	import { Slider } from '$lib/components/ui/slider';
 	import { selectedElement } from '$lib/stores.js';
 	import { applyStyleProperty, debounce } from '$lib/dom-utils.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
@@ -208,5 +209,21 @@
 				</Select.Content>
 			</Select.Root>
 		</div>
+		<!-- Slider for Border Radius (when unit is px) -->
+		{#if borderRadiusUnit === 'px'}
+			<div class="mt-2">
+				<Slider
+					value={[parseInt(borderRadius) || 0]}
+					onValueChange={(values) => {
+						borderRadius = values[0].toString();
+						handleDimensionChange('borderRadius', borderRadius, borderRadiusUnit);
+					}}
+					min={0}
+					max={50}
+					step={1}
+					class="w-full"
+				/>
+			</div>
+		{/if}
 	</div>
 </div>

@@ -18,8 +18,24 @@
 	/** @type {string} */
 	let borderColor = '';
 
+	// Unit selector
+	/** @type {string} */
+	let borderWidthUnit = 'px';
+
 	// Track the last processed element to avoid reactive loops
 	let lastProcessedElement = null;
+
+	/**
+	 * Extract numeric value and unit from CSS value
+	 */
+	function parseValue(value) {
+		if (!value || value === '0') return { number: '0', unit: 'px' };
+		const match = value.match(/^(-?\d*\.?\d+)(.*)$/);
+		if (match) {
+			return { number: match[1], unit: match[2] || 'px' };
+		}
+		return { number: '', unit: 'px' };
+	}
 
 	/**
 	 * Update local state when selected element changes
@@ -36,7 +52,12 @@
 			return computedValue || '';
 		};
 		
-		borderWidth = getStyleValue(element.style.borderWidth, styles.borderWidth);
+		// Parse border width
+		const borderWidthValue = getStyleValue(element.style.borderWidth, styles.borderWidth);
+		const bwParsed = parseValue(borderWidthValue);
+		borderWidth = bwParsed.number;
+		borderWidthUnit = bwParsed.unit;
+		
 		borderStyle = getStyleValue(element.style.borderStyle, styles.borderStyle);
 		
 		// Convert border color to hex for color input
@@ -54,6 +75,11 @@
 		handleStyleChange('borderStyle', borderStyle);
 	}
 
+	// Watch for unit changes
+	$: if (borderWidthUnit) {
+		handleUnitChange(borderWidthUnit);
+	}
+
 	/**
 	 * Handle style change
 	 */
@@ -64,6 +90,28 @@
 			onPropertyChange(property, value);
 			syncHTMLSource();
 		}
+	}
+
+	/**
+	 * Handle border width change
+	 */
+	function handleBorderWidthChange(value, unit) {
+		if ($selectedElement && value !== '') {
+			const processedValue = value === '0' ? '0' : `${value}${unit}`;
+			
+			const element = $selectedElement;
+			applyStyleProperty(element, 'borderWidth', processedValue);
+			onPropertyChange('borderWidth', processedValue);
+			syncHTMLSource();
+		}
+	}
+
+	/**
+	 * Handle unit change
+	 */
+	function handleUnitChange(unit) {
+		borderWidthUnit = unit;
+		if (borderWidth !== '') handleBorderWidthChange(borderWidth, unit);
 	}
 
 	/**
@@ -120,30 +168,45 @@
 <div class="space-y-4">
 	<h3 class="text-sm font-medium">Border</h3>
 	
-	<div class="grid grid-cols-2 gap-2">
-		<div class="space-y-2">
-			<Label for="border-width">Width</Label>
+	<!-- Border Width -->
+	<div class="space-y-2">
+		<Label class="text-xs">Width</Label>
+		<div class="flex gap-2">
 			<Input
-				id="border-width"
 				bind:value={borderWidth}
-				oninput={() => handleStyleChange('borderWidth', borderWidth)}
-				placeholder="0px"
+				oninput={() => handleBorderWidthChange(borderWidth, borderWidthUnit)}
+				placeholder="0"
+				class="flex-1"
+				type="number"
 			/>
-		</div>
-		<div class="space-y-2">
-			<Label>Style</Label>
-			<Select.Root type="single" bind:value={borderStyle}>
-				<Select.Trigger class="w-full">
-					{borderStyle ? borderStyle.charAt(0).toUpperCase() + borderStyle.slice(1) : 'None'}
+			<Select.Root type="single" bind:value={borderWidthUnit}>
+				<Select.Trigger class="w-20 h-9 text-xs">
+					{borderWidthUnit}
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="none" label="None">None</Select.Item>
-					<Select.Item value="solid" label="Solid">Solid</Select.Item>
-					<Select.Item value="dashed" label="Dashed">Dashed</Select.Item>
-					<Select.Item value="dotted" label="Dotted">Dotted</Select.Item>
+					<Select.Item value="px" label="px">px</Select.Item>
+					<Select.Item value="%" label="%">%</Select.Item>
+					<Select.Item value="em" label="em">em</Select.Item>
+					<Select.Item value="rem" label="rem">rem</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>
+	</div>
+
+	<!-- Border Style -->
+	<div class="space-y-2">
+		<Label>Style</Label>
+		<Select.Root type="single" bind:value={borderStyle}>
+			<Select.Trigger class="w-full">
+				{borderStyle ? borderStyle.charAt(0).toUpperCase() + borderStyle.slice(1) : 'None'}
+			</Select.Trigger>
+			<Select.Content>
+				<Select.Item value="none" label="None">None</Select.Item>
+				<Select.Item value="solid" label="Solid">Solid</Select.Item>
+				<Select.Item value="dashed" label="Dashed">Dashed</Select.Item>
+				<Select.Item value="dotted" label="Dotted">Dotted</Select.Item>
+			</Select.Content>
+		</Select.Root>
 	</div>
 
 	<div class="space-y-2">
