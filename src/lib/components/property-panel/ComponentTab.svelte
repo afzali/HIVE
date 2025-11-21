@@ -4,7 +4,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Collapsible from '$lib/components/ui/collapsible';
-	import { ChevronDown, Plus, X } from 'lucide-svelte';
+	import { ChevronDown, Plus, X, Copy } from 'lucide-svelte';
 	import { selectedElement } from '$lib/stores.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
 
@@ -51,8 +51,17 @@
 	let customAttributes = [];
 	let attributeIdCounter = 0;
 
+	// Component Template System
+	/** @type {string} */
+	let templateMode = 'new'; // 'new' or 'existing'
+	/** @type {string} */
+	let selectedTemplate = '';
+	/** @type {Array<{name: string, type: string, props: Array<{name: string, value: string}>, customAttrs: Array<{name: string, value: string}>, route?: string, loop?: string, loopKey?: string, nav?: string, condition?: string, hasElse?: boolean}>} */
+	let availableTemplates = [];
+
 	// Accordion states
-	let componentTypeOpen = true;
+	let templateOpen = true;
+	let componentTypeOpen = false;
 	let loopOpen = false;
 	let propsOpen = false;
 	let navigationOpen = false;
@@ -61,6 +70,191 @@
 
 	// Track the last processed element to avoid reactive loops
 	let lastProcessedElement = null;
+
+	/**
+	 * Get the iframe document where the HTML editor content is
+	 */
+	function getIframeDocument() {
+		// Look for iframe in the page
+		const iframe = document.querySelector('iframe');
+		if (iframe && iframe.contentDocument) {
+			return iframe.contentDocument;
+		}
+		
+		// Fallback to main document if no iframe found
+		return document;
+	}
+
+	/**
+	 * Scan page for existing components and build templates
+	 */
+	function scanForExistingComponents() {
+		console.log('Scanning for existing components...');
+		
+		// Check if we're in browser environment
+		if (typeof document === 'undefined') {
+			console.log('Document not available');
+			return;
+		}
+		
+		const templates = new Map();
+		
+		// Get the correct document (iframe or main)
+		const targetDoc = getIframeDocument();
+		console.log('Scanning in document:', targetDoc === document ? 'main document' : 'iframe document');
+		
+		// Try different selectors to make sure we catch everything
+		const selectors = [
+			'[data-cmp]',
+			'[data-view-name]'
+		];
+		
+		let allElements = [];
+		selectors.forEach(selector => {
+			try {
+				const elements = targetDoc.querySelectorAll(selector);
+				console.log(`Selector "${selector}" found ${elements.length} elements in target document`);
+				allElements = [...allElements, ...Array.from(elements)];
+			} catch (e) {
+				console.error(`Error with selector "${selector}":`, e);
+			}
+		});
+		
+		// Remove duplicates
+		allElements = [...new Set(allElements)];
+		console.log(`Total unique elements found: ${allElements.length}`);
+		
+		allElements.forEach((element, index) => {
+			console.log(`Processing element ${index + 1}:`, element);
+			
+			let componentName = '';
+			let componentType = 'component';
+			
+			if (element.hasAttribute('data-cmp')) {
+				componentName = element.getAttribute('data-cmp');
+				componentType = 'component';
+				console.log(`Found component: ${componentName} (type: ${componentType})`);
+			} else if (element.hasAttribute('data-view-name')) {
+				componentName = element.getAttribute('data-view-name');
+				componentType = element.getAttribute('data-view-kind') || 'component';
+				console.log(`Found view component: ${componentName} (type: ${componentType})`);
+			}
+			
+			if (!componentName) {
+				console.log('Skipping element - no component name');
+				return;
+			}
+			
+			// Extract all properties
+			const props = [];
+			const customAttrs = [];
+			
+			for (let i = 0; i < element.attributes.length; i++) {
+				const attr = element.attributes[i];
+				if (attr.name.startsWith('data-prop-')) {
+					const propName = attr.name.substring(10);
+					props.push({ name: propName, value: attr.value });
+				} else if (!attr.name.startsWith('data-') && 
+						   !['class', 'id', 'style'].includes(attr.name) &&
+						   !attr.name.startsWith('on')) {
+					customAttrs.push({ name: attr.name, value: attr.value });
+				}
+			}
+			
+			const template = {
+				name: componentName,
+				type: componentType,
+				props: props,
+				customAttrs: customAttrs,
+				route: element.getAttribute('data-route') || '',
+				loop: element.getAttribute('data-for') || '',
+				loopKey: element.getAttribute('data-key') || '',
+				nav: element.getAttribute('data-nav') || '',
+				condition: element.getAttribute('data-if') || '',
+				hasElse: element.hasAttribute('data-else')
+			};
+			
+			console.log(`Template created for ${componentName}:`, template);
+			
+			// Use component name as key to avoid duplicates
+			templates.set(componentName, template);
+		});
+		
+		const newTemplates = Array.from(templates.values());
+		console.log('Final templates:', newTemplates);
+		
+		// Force reactivity update
+		availableTemplates = newTemplates;
+		
+		// Also trigger a manual update
+		setTimeout(() => {
+			availableTemplates = [...newTemplates];
+		}, 10);
+	}
+
+	/**
+	 * Apply template to current element
+	 */
+	function applyTemplate(templateName) {
+		const template = availableTemplates.find(t => t.name === templateName);
+		if (!template) return;
+		
+		// Apply template properties
+		componentType = template.type;
+		componentName = template.name;
+		routePath = template.route || '';
+		loopExpression = template.loop || '';
+		loopKey = template.loopKey || '';
+		navigationPath = template.nav || '';
+		conditionalIf = template.condition || '';
+		hasElse = template.hasElse || false;
+		
+		// Apply props with new IDs
+		componentProps = template.props.map(prop => ({
+			id: `prop-${propIdCounter++}`,
+			name: prop.name,
+			value: prop.value
+		}));
+		
+		// Apply custom attributes with new IDs
+		customAttributes = template.customAttrs.map(attr => ({
+			id: `attr-${attributeIdCounter++}`,
+			name: attr.name,
+			value: attr.value
+		}));
+		
+		// Apply to element
+		applyComponentAnnotation();
+	}
+
+	/**
+	 * Handle template mode change
+	 */
+	function handleTemplateModeChange() {
+		if (templateMode === 'existing') {
+			// Force scan when switching to existing mode
+			setTimeout(() => {
+				scanForExistingComponents();
+			}, 100);
+		} else {
+			selectedTemplate = '';
+			availableTemplates = [];
+		}
+	}
+
+	// Reactive statement for template mode changes
+	let previousTemplateMode = templateMode;
+	$: if (templateMode !== previousTemplateMode) {
+		handleTemplateModeChange();
+		previousTemplateMode = templateMode;
+	}
+
+	// Reactive statement for template selection
+	let previousSelectedTemplate = selectedTemplate;
+	$: if (selectedTemplate !== previousSelectedTemplate && selectedTemplate) {
+		applyTemplate(selectedTemplate);
+		previousSelectedTemplate = selectedTemplate;
+	}
 
 	/**
 	 * Update local state when selected element changes
@@ -106,21 +300,34 @@
 		conditionalIf = element.getAttribute('data-if') || '';
 		hasElse = element.hasAttribute('data-else');
 
-		// Read props
+		// Read props and custom attributes
 		const props = [];
 		const customAttrs = [];
+		
+		// List of component-specific data attributes to exclude from custom attributes
+		const componentDataAttrs = [
+			'data-cmp', 'data-view-kind', 'data-view-name', 'data-route',
+			'data-for', 'data-key', 'data-nav', 'data-if', 'data-else'
+		];
+		
 		for (let i = 0; i < element.attributes.length; i++) {
 			const attr = element.attributes[i];
+			
 			if (attr.name.startsWith('data-prop-')) {
+				// Component props
 				const propName = attr.name.substring(10); // Remove 'data-prop-'
 				props.push({ id: `prop-${propIdCounter++}`, name: propName, value: attr.value });
+			} else if (attr.name.startsWith('data-') && !componentDataAttrs.includes(attr.name)) {
+				// Other data-* attributes (custom)
+				customAttrs.push({ id: `attr-${attributeIdCounter++}`, name: attr.name, value: attr.value });
 			} else if (!attr.name.startsWith('data-') && 
 					   !['class', 'id', 'style'].includes(attr.name) &&
 					   !attr.name.startsWith('on')) {
-				// Custom attributes (excluding standard ones)
+				// Non-data custom attributes (like aria-*, role, etc.)
 				customAttrs.push({ id: `attr-${attributeIdCounter++}`, name: attr.name, value: attr.value });
 			}
 		}
+		
 		componentProps = props;
 		customAttributes = customAttrs;
 	}
@@ -331,6 +538,91 @@
 			</div>
 		</div>
 	{/if}
+	<!-- Component Template Section -->
+	<Collapsible.Root bind:open={templateOpen}>
+		<Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium hover:bg-muted/80 transition-colors">
+			<span>Component Template</span>
+			<ChevronDown class="h-4 w-4 transition-transform duration-200 {templateOpen ? 'rotate-180' : ''}" />
+		</Collapsible.Trigger>
+		<Collapsible.Content class="px-3 py-2">
+			<div class="space-y-4">
+				<div class="space-y-2">
+					<Label class="text-xs">Template Mode</Label>
+					<Select.Root type="single" name="templateMode" bind:value={templateMode}>
+						<Select.Trigger class="w-full h-9 text-sm">
+							{templateMode === 'new' ? 'New Component' : 'Use Existing Component'}
+						</Select.Trigger>
+						<Select.Content>
+							<Select.Group>
+								<Select.Item value="new" label="New Component">
+									New Component
+								</Select.Item>
+								<Select.Item value="existing" label="Use Existing Component">
+									Use Existing Component
+								</Select.Item>
+							</Select.Group>
+						</Select.Content>
+					</Select.Root>
+				</div>
+
+				{#if templateMode === 'existing'}
+					<div class="space-y-2">
+						<div class="flex items-center justify-between">
+							<Label class="text-xs">Available Components</Label>
+							<button
+								onclick={() => {
+									console.log('Scan button clicked');
+									scanForExistingComponents();
+								}}
+								class="inline-flex items-center gap-1 px-2 py-1 bg-muted text-muted-foreground rounded-md text-xs hover:bg-muted/80 transition-colors"
+								title="Refresh component list"
+							>
+								<Copy class="h-3 w-3" />
+								Scan ({availableTemplates.length})
+							</button>
+						</div>
+
+						
+						{#if availableTemplates.length === 0}
+							<div class="p-3 text-center text-xs text-muted-foreground bg-muted/30 rounded-md">
+								No components found on this page
+							</div>
+						{:else}
+							<Select.Root type="single" name="selectedTemplate" bind:value={selectedTemplate}>
+								<Select.Trigger class="w-full h-9 text-sm">
+									{selectedTemplate || 'Select a component'}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Group>
+										{#each availableTemplates as template (template.name)}
+											<Select.Item value={template.name} label={template.name}>
+												<div class="flex flex-col items-start w-full">
+													<span class="font-medium">{template.name}</span>
+													<span class="text-xs text-muted-foreground">
+														{template.type} • {template.props.length} props • {template.customAttrs.length} attrs
+													</span>
+												</div>
+											</Select.Item>
+										{/each}
+									</Select.Group>
+								</Select.Content>
+							</Select.Root>
+						{/if}
+					</div>
+
+					{#if selectedTemplate}
+						<div class="p-3 bg-primary/5 border border-primary/20 rounded-md">
+							<div class="text-xs font-medium text-primary mb-2">Template Applied</div>
+							<div class="text-xs text-muted-foreground">
+								All properties from "{selectedTemplate}" have been copied. You can modify them below.
+							</div>
+						</div>
+					{/if}
+				{/if}
+			</div>
+		</Collapsible.Content>
+	</Collapsible.Root>
+
 	<!-- Component Type Section -->
 	<Collapsible.Root bind:open={componentTypeOpen}>
 		<Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium hover:bg-muted/80 transition-colors">

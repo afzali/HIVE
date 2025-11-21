@@ -32,6 +32,17 @@
 </script>
 
 <Tabs.Content value="design" class="flex-1 overflow-y-auto mt-4 space-y-2">
+	<!-- Attributes Section -->
+	<Collapsible.Root bind:open={attributesOpen}>
+		<Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium hover:bg-muted/80 transition-colors">
+			<span>Attributes</span>
+			<ChevronDown class="h-4 w-4 transition-transform duration-200 {attributesOpen ? 'rotate-180' : ''}" />
+		</Collapsible.Trigger>
+		<Collapsible.Content class="px-3 py-2">
+			<AttributesSection {onPropertyChange} />
+		</Collapsible.Content>
+	</Collapsible.Root>
+	
 	<!-- Spacing Section -->
 	<Collapsible.Root bind:open={spacingOpen}>
 		<Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium hover:bg-muted/80 transition-colors">
@@ -114,14 +125,5 @@
 		</Collapsible.Content>
 	</Collapsible.Root>
 
-	<!-- Attributes Section -->
-	<Collapsible.Root bind:open={attributesOpen}>
-		<Collapsible.Trigger class="flex w-full items-center justify-between rounded-lg bg-muted/50 px-3 py-2 text-sm font-medium hover:bg-muted/80 transition-colors">
-			<span>Attributes</span>
-			<ChevronDown class="h-4 w-4 transition-transform duration-200 {attributesOpen ? 'rotate-180' : ''}" />
-		</Collapsible.Trigger>
-		<Collapsible.Content class="px-3 py-2">
-			<AttributesSection {onPropertyChange} />
-		</Collapsible.Content>
-	</Collapsible.Root>
+	
 </Tabs.Content>
