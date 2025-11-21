@@ -150,12 +150,46 @@ The HTML Visual Editor is a SvelteKit-based web application that provides a brow
 ```
 
 #### Property Panel (`PropertyPanel.svelte`)
-- Right sidebar displaying element properties
-- Uses shadcn-svelte Input, Label, Select, and Textarea components
-- Grouped controls for different property types
-- Immediate DOM updates for style properties
-- Debounced updates for text content (300ms or on focusout)
-- Visual indicators to distinguish padding from margin
+- Right sidebar with tabbed interface for element properties
+- Uses shadcn-svelte Tabs component for tab navigation
+- Five tabs: Design, Component, Code, HTML, Chat
+- Maintains active tab selection across element changes
+- Immediate DOM updates for all property changes
+
+**Design Tab:**
+- Comprehensive visual controls similar to CSS Pro editor
+- Spacing controls with visual box model (padding/margin)
+- Typography controls (font, size, weight, color, etc.)
+- Background controls (colors, gradients, images)
+- Border and effects controls (shadows, filters)
+- Flexbox controls (when display is flex)
+- Uses shadcn-svelte Input, Select, Label, and Textarea components
+
+**Component Tab:**
+- Component annotation interface for data-* attributes
+- Component type selector (Component, Page, Panel, Widget, None)
+- Loop annotation controls (data-for, data-key)
+- Props management (data-prop-*)
+- Navigation annotation (data-nav)
+- Component library for reusing saved definitions
+
+**Code Tab:**
+- CSS code editor using Monaco Editor
+- Shows important CSS styles for selected element
+- Live validation with error indicators
+- Immediate application to element's inline styles
+
+**HTML Tab:**
+- HTML code editor using Monaco Editor
+- Shows complete outerHTML of selected element
+- Live validation with error indicators
+- Immediate DOM replacement on valid changes
+
+**Chat Tab:**
+- Simple chat interface for AI assistance
+- Message history area and input field
+- Model selector dropdown
+- Basic structure without advanced AI integration
 
 ```javascript
 // PropertyPanel component props
@@ -163,6 +197,9 @@ The HTML Visual Editor is a SvelteKit-based web application that provides a brow
  * @typedef {Object} PropertyPanelProps
  * @property {HTMLElement|null} selectedElement
  * @property {function(string, any): void} onPropertyChange
+ * @property {function(string, string): void} onDataAttributeChange
+ * @property {string} activeTab
+ * @property {function(string): void} onTabChange
  */
 
 /**
@@ -171,21 +208,81 @@ The HTML Visual Editor is a SvelteKit-based web application that provides a brow
  * @property {string} id
  * @property {string[]} classes
  * @property {Object.<string, string>} attributes
+ * @property {Object.<string, string>} dataAttributes
  * @property {Object} styles
- * @property {Object} styles.padding
- * @property {string} styles.padding.top
- * @property {string} styles.padding.right
- * @property {string} styles.padding.bottom
- * @property {string} styles.padding.left
- * @property {Object} styles.margin
- * @property {string} styles.margin.top
- * @property {string} styles.margin.right
- * @property {string} styles.margin.bottom
- * @property {string} styles.margin.left
- * @property {string} styles.width
- * @property {string} styles.height
- * @property {string} styles.display
+ * @property {Object} styles.spacing
+ * @property {Object} styles.spacing.padding
+ * @property {string} styles.spacing.padding.top
+ * @property {string} styles.spacing.padding.right
+ * @property {string} styles.spacing.padding.bottom
+ * @property {string} styles.spacing.padding.left
+ * @property {Object} styles.spacing.margin
+ * @property {string} styles.spacing.margin.top
+ * @property {string} styles.spacing.margin.right
+ * @property {string} styles.spacing.margin.bottom
+ * @property {string} styles.spacing.margin.left
+ * @property {Object} styles.dimensions
+ * @property {string} styles.dimensions.width
+ * @property {string} styles.dimensions.height
+ * @property {string} styles.dimensions.borderRadius
+ * @property {Object} styles.typography
+ * @property {string} styles.typography.fontFamily
+ * @property {string} styles.typography.fontSize
+ * @property {string} styles.typography.fontWeight
+ * @property {string} styles.typography.lineHeight
+ * @property {string} styles.typography.letterSpacing
+ * @property {string} styles.typography.textAlign
+ * @property {string} styles.typography.textDecoration
+ * @property {string} styles.typography.color
+ * @property {Object} styles.background
+ * @property {string} styles.background.backgroundColor
+ * @property {string} styles.background.backgroundImage
+ * @property {Object} styles.border
+ * @property {string} styles.border.borderWidth
+ * @property {string} styles.border.borderStyle
+ * @property {string} styles.border.borderColor
+ * @property {Object} styles.effects
+ * @property {string} styles.effects.boxShadow
+ * @property {string} styles.effects.textShadow
+ * @property {string} styles.effects.opacity
+ * @property {string} styles.effects.filter
+ * @property {Object} styles.layout
+ * @property {string} styles.layout.display
+ * @property {string} styles.layout.position
+ * @property {string} styles.layout.top
+ * @property {string} styles.layout.right
+ * @property {string} styles.layout.bottom
+ * @property {string} styles.layout.left
+ * @property {string} styles.layout.zIndex
+ * @property {Object} styles.flexbox
+ * @property {string} styles.flexbox.justifyContent
+ * @property {string} styles.flexbox.alignItems
+ * @property {string} styles.flexbox.flexDirection
+ * @property {string} styles.flexbox.flexWrap
  * @property {string} [textContent]
+ */
+
+/**
+ * @typedef {Object} ComponentAnnotation
+ * @property {'component'|'page'|'panel'|'widget'|'none'} type
+ * @property {string} name
+ * @property {string} [route] - Only for page type
+ * @property {Object} [loop]
+ * @property {string} loop.expression - e.g., "item in items"
+ * @property {string} loop.key - e.g., "item.id"
+ * @property {Object.<string, string>} props - data-prop-* attributes
+ * @property {string} [navigation] - data-nav route
+ * @property {Object} [conditional]
+ * @property {string} conditional.if - data-if expression
+ * @property {boolean} conditional.else - data-else flag
+ */
+
+/**
+ * @typedef {Object} ComponentLibraryItem
+ * @property {string} name
+ * @property {ComponentAnnotation} annotation
+ * @property {number} createdAt
+ * @property {number} usageCount
  */
 ```
 
@@ -317,6 +414,28 @@ export function getElementBoundingBox(element, iframeRect) { /* ... */ }
  * @param {string} value
  */
 export function applyStyleProperty(element, property, value) { /* ... */ }
+
+/**
+ * Apply data attribute to an element immediately
+ * @param {HTMLElement} element
+ * @param {string} attribute
+ * @param {string} value
+ */
+export function applyDataAttribute(element, attribute, value) { /* ... */ }
+
+/**
+ * Remove data attribute from an element immediately
+ * @param {HTMLElement} element
+ * @param {string} attribute
+ */
+export function removeDataAttribute(element, attribute) { /* ... */ }
+
+/**
+ * Get all data attributes from an element
+ * @param {HTMLElement} element
+ * @returns {Object.<string, string>}
+ */
+export function getDataAttributes(element) { /* ... */ }
 
 /**
  * Debounce a function call
@@ -456,6 +575,90 @@ export function downloadHTML(html, filename) { /* ... */ }
  * @param {string} html
  */
 export function autoSave(html) { /* ... */ }
+```
+
+#### Component Library Utilities (`lib/component-library.js`)
+```javascript
+/**
+ * Manages component library for reusable annotations
+ */
+export class ComponentLibrary {
+  #storageKey = 'html-editor-component-library';
+
+  /**
+   * Save a component definition
+   * @param {string} name
+   * @param {ComponentAnnotation} annotation
+   */
+  saveComponent(name, annotation) { /* ... */ }
+
+  /**
+   * Load a component definition
+   * @param {string} name
+   * @returns {ComponentAnnotation|null}
+   */
+  loadComponent(name) { /* ... */ }
+
+  /**
+   * Get all component names
+   * @returns {string[]}
+   */
+  listComponents() { /* ... */ }
+
+  /**
+   * Delete a component definition
+   * @param {string} name
+   */
+  deleteComponent(name) { /* ... */ }
+
+  /**
+   * Check if component exists
+   * @param {string} name
+   * @returns {boolean}
+   */
+  hasComponent(name) { /* ... */ }
+
+  /**
+   * Get component usage statistics
+   * @returns {ComponentLibraryItem[]}
+   */
+  getComponentStats() { /* ... */ }
+
+  /**
+   * Increment usage count for a component
+   * @param {string} name
+   */
+  incrementUsage(name) { /* ... */ }
+}
+
+/**
+ * Apply component annotation to element
+ * @param {HTMLElement} element
+ * @param {ComponentAnnotation} annotation
+ */
+export function applyComponentAnnotation(element, annotation) { /* ... */ }
+
+/**
+ * Extract component annotation from element
+ * @param {HTMLElement} element
+ * @returns {ComponentAnnotation}
+ */
+export function extractComponentAnnotation(element) { /* ... */ }
+
+/**
+ * Validate component name (PascalCase)
+ * @param {string} name
+ * @returns {boolean}
+ */
+export function validateComponentName(name) { /* ... */ }
+
+/**
+ * Generate unique component name
+ * @param {string} baseName
+ * @param {string[]} existingNames
+ * @returns {string}
+ */
+export function generateUniqueComponentName(baseName, existingNames) { /* ... */ }
 ```
 
 ## Data Models
@@ -677,22 +880,26 @@ describe('Edit Mode Flow', () => {
 - Overlay layer implementation
 - Element selection with click
 - Basic highlight border
-- Property Panel structure using shadcn-svelte components
-- Simple property editing (text, classes) with shadcn-svelte Input
+- Property Panel tabbed structure using shadcn-svelte Tabs
+- Design tab with basic styling controls using shadcn-svelte Input, Select
 
 ### Phase 3: Advanced Editing
-- Full Property Panel controls using shadcn-svelte Input, Select, Label
+- Complete Design tab with comprehensive styling controls (spacing, typography, background, effects)
+- Component tab with annotation interface and component library
 - Context Menu using shadcn-svelte DropdownMenu
 - Add/duplicate/delete operations
 - DOM manipulation utilities
 
-### Phase 4: Code Mode
-- Monaco Editor integration
-- HTML validation
-- Apply/Cancel functionality using shadcn-svelte Button
-- Sync between Code and Edit modes
+### Phase 4: Code and HTML Tabs
+- Code tab with CSS editor using Monaco Editor
+- HTML tab with HTML editor using Monaco Editor
+- Live validation for both CSS and HTML
+- Immediate DOM updates for valid changes
+- Full-screen Code mode (existing functionality)
+- Sync between all editing modes
 
 ### Phase 5: Additional Features
+- Chat tab with basic AI interface structure
 - Layers Panel with tree view using shadcn-svelte Collapsible
 - Undo/Redo implementation
 - Responsive mode switching
@@ -809,8 +1016,11 @@ describe('Edit Mode Flow', () => {
 - Mode switching: < 300ms
 - Element selection: < 50ms
 - Style property update: Immediate (< 16ms)
+- Data attribute update: Immediate (< 16ms)
 - HTML Source sync: < 500ms
 - Text content update: 300ms debounce or immediate on focusout
+- Tab switching in Property Panel: < 100ms
+- Component library operations: < 50ms
 - Canvas re-render: < 500ms
 - Undo/Redo: < 200ms
 

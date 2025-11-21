@@ -16,7 +16,14 @@ The HTML Visual Editor is a browser-based interactive tool that enables users to
 - **Editor System**: The complete HTML Visual Editor application
 - **Canvas**: The iframe element that renders the HTML page being edited
 - **Floating Control Button**: The circular button at the bottom of the screen that switches between modes
-- **Property Panel**: The right sidebar that displays editable properties of the selected element
+- **Property Panel**: The right sidebar that displays editable properties of the selected element through a tabbed interface
+- **Design Tab**: The tab in Property Panel containing visual controls for styling properties like padding, margin, and layout
+- **Component Tab**: The tab in Property Panel for tagging HTML elements as components using data-* attributes for AI-assisted conversion to framework components
+- **Component Annotation**: The process of adding data-* attributes to HTML elements to define them as components, views, loops, props, and navigation
+- **Component Library**: A saved collection of component definitions that can be reused across different elements
+- **Code Tab**: The tab in Property Panel containing a CSS code editor for direct style editing of the selected element
+- **HTML Tab**: The tab in Property Panel containing an HTML code editor for direct markup editing of the selected element
+- **Chat Tab**: The tab in Property Panel containing an AI chat interface for getting assistance with element editing
 - **Bottom Toolbar**: The toolbar at the bottom of the screen containing Save, Layers, and element manipulation controls
 - **Overlay Layer**: A transparent layer positioned over the Canvas that enables element selection and highlighting
 - **HTML Source**: The authoritative string variable containing the complete HTML document
@@ -73,20 +80,38 @@ The HTML Visual Editor is a browser-based interactive tool that enables users to
 
 ### Requirement 5
 
-**User Story:** As a user, I want to modify element properties through a graphical interface, so that I can adjust styling without writing CSS code
+**User Story:** As a user, I want to modify element properties through a tabbed graphical interface, so that I can access different types of editing controls in an organized manner
 
 #### Acceptance Criteria
 
-1. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for padding on all four sides with visual indicators
-2. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for margin on all four sides with visual indicators
-3. WHEN an element is selected in Edit mode, THE Property Panel SHALL display controls for width and height
-4. WHEN an element is selected in Edit mode, THE Property Panel SHALL display a single-select control for display property including block, inline, flex, grid, and none options
-5. WHEN the user modifies a style property value, THE Editor System SHALL apply the change to the selected element's inline style immediately
-6. WHEN the user modifies a style property value, THE Editor System SHALL update the HTML Source within 500 milliseconds to keep it synchronized
-7. WHEN the user modifies text content, THE Editor System SHALL apply the change on input with debounce of 300 milliseconds or on focus out
-8. WHERE the selected element contains text content, THE Property Panel SHALL display a text editor control
-9. WHERE the selected element has a class attribute, THE Property Panel SHALL display an editable list of CSS classes
-10. THE Property Panel SHALL display visual labels to distinguish between padding and margin controls
+1. WHEN an element is selected in Edit mode, THE Property Panel SHALL display a tabbed interface with Design, Component, Code, HTML, and Chat tabs
+2. WHEN the Design tab is active, THE Property Panel SHALL display visual controls for styling properties including padding, margin, width, height, and display
+3. WHEN the Component tab is active, THE Property Panel SHALL display a placeholder area for future component-specific controls
+4. WHEN the Code tab is active, THE Property Panel SHALL display CSS code editor for the selected element's styles
+5. WHEN the HTML tab is active, THE Property Panel SHALL display HTML code editor for the selected element's markup
+6. WHEN the Chat tab is active, THE Property Panel SHALL display an AI chat interface for element editing assistance
+7. THE Property Panel SHALL maintain the active tab selection when switching between different selected elements
+8. WHEN the user modifies a style property value in any tab, THE Editor System SHALL apply the change to the selected element's inline style immediately
+9. WHEN the user modifies a style property value, THE Editor System SHALL update the HTML Source within 500 milliseconds to keep it synchronized
+10. WHEN the user modifies text content, THE Editor System SHALL apply the change on input with debounce of 300 milliseconds or on focus out
+
+### Requirement 5A
+
+**User Story:** As a user, I want to use comprehensive visual controls in the Design tab similar to CSS Pro editor, so that I can adjust all styling properties without writing CSS code
+
+#### Acceptance Criteria
+
+1. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display spacing controls with visual box model including padding and margin on all four sides with drag-to-adjust functionality
+2. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display dimension controls for width, height, and border-radius with unit selectors (px, %, em, rem, auto)
+3. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display typography controls including font-family, font-size, font-weight, line-height, letter-spacing, text-align, text-decoration, and color
+4. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display background controls including solid colors, gradients, and background images with preset options
+5. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display border controls including border-width, border-style, border-color, and border-radius
+6. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display display and positioning controls including display type, position, top, right, bottom, left, and z-index
+7. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display effects controls including box-shadow, text-shadow, opacity, and CSS filters
+8. WHEN the Design tab is active and an element is selected, THE Property Panel SHALL display flexbox controls when display is set to flex including justify-content, align-items, flex-direction, and flex-wrap
+9. WHERE the selected element contains text content, THE Design tab SHALL display an inline text editor
+10. WHERE the selected element has a class attribute, THE Design tab SHALL display an editable list of CSS classes
+11. ALL style changes in the Design tab SHALL be applied immediately to the selected element's inline style in the DOM
 
 ### Requirement 6
 
@@ -177,6 +202,67 @@ The HTML Visual Editor is a browser-based interactive tool that enables users to
 7. THE Editor System SHALL maintain the selected element reference during HTML Source synchronization
 
 ### Requirement 13
+
+**User Story:** As a user, I want to edit CSS and HTML code directly in the Property Panel tabs, so that I can make precise code changes for the selected element
+
+#### Acceptance Criteria
+
+1. WHEN the Code tab is active, THE Property Panel SHALL display a CSS code editor with syntax highlighting
+2. WHEN the Code tab is active, THE Property Panel SHALL show only the most important CSS styles that apply to the selected element including computed styles and inline styles
+3. WHEN the user modifies CSS in the Code tab, THE Editor System SHALL apply changes to the selected element's inline style immediately in the DOM
+4. WHEN the HTML tab is active, THE Property Panel SHALL display an HTML code editor with syntax highlighting
+5. WHEN the HTML tab is active, THE Property Panel SHALL show the complete outerHTML of the selected element including all its children and attributes
+6. WHEN the user modifies HTML in the HTML tab, THE Editor System SHALL replace the selected element in the Canvas DOM immediately
+7. WHEN any changes are made in Code or HTML tabs, THE Editor System SHALL update the HTML Source within 500 milliseconds to keep it synchronized
+8. IF the user enters invalid CSS or HTML syntax, THEN THE Editor System SHALL display inline error indicators without applying the changes
+
+### Requirement 14
+
+**User Story:** As a user, I want to tag HTML elements as components using data-* attributes in the Component tab, so that I can prepare them for AI-assisted conversion to framework components like React, Svelte, or Vue
+
+#### Acceptance Criteria
+
+1. WHEN the Component tab is active, THE Property Panel SHALL display component annotation controls for the selected element
+2. WHEN the Component tab is active, THE Property Panel SHALL display a dropdown to select component type including "Component", "Page", "Panel", "Widget", and "None"
+3. WHEN the user selects "Component", THE Property Panel SHALL display an input field for component name in PascalCase format
+4. WHEN the user selects "Page", THE Property Panel SHALL display input fields for page name and route path
+5. WHEN the user selects "Panel" or "Widget", THE Property Panel SHALL display an input field for the respective name
+6. WHEN the Component tab is active, THE Property Panel SHALL display controls for loop annotation including "item in items" format and key field
+7. WHEN the Component tab is active, THE Property Panel SHALL display controls for adding props using "data-prop-*" format with name and value fields
+8. WHEN the Component tab is active, THE Property Panel SHALL display controls for navigation annotation with route path input
+9. WHEN the Component tab is active, THE Property Panel SHALL display controls for conditional rendering with "data-if" and "data-else" options
+10. WHEN the user applies component annotations, THE Editor System SHALL add the corresponding data-* attributes to the selected element immediately
+11. THE Component tab SHALL maintain a library of previously created component definitions for reuse
+12. WHEN the user selects a component from the library, THE Property Panel SHALL apply all saved annotations to the current element
+
+### Requirement 15
+
+**User Story:** As a user, I want to use an AI chat interface in the Property Panel, so that I can get assistance with editing the selected element
+
+#### Acceptance Criteria
+
+1. WHEN the Chat tab is active, THE Property Panel SHALL display a simple chat interface with message history area and input field
+2. WHEN the Chat tab is active, THE Property Panel SHALL display a text input field and send button for communicating with AI
+3. WHEN the Chat tab is active, THE Property Panel SHALL display a model selector dropdown to choose between different AI models
+4. THE Chat tab SHALL maintain conversation history during the editing session in a scrollable message area
+5. THE Chat tab SHALL be implemented as a basic chat structure without advanced AI integration for the initial version
+
+### Requirement 16
+
+**User Story:** As a user, I want all changes to be applied immediately to the DOM and then synchronized to the source, so that I see real-time updates without delays
+
+#### Acceptance Criteria
+
+1. WHEN the user makes any change in any Property Panel tab, THE Editor System SHALL apply the change immediately to the selected element in the Canvas DOM
+2. WHEN a DOM change is applied, THE Editor System SHALL update the HTML Source within 500 milliseconds to keep it synchronized
+3. WHEN the user modifies styles in Design tab, THE Editor System SHALL apply changes to the element's inline style attribute immediately
+4. WHEN the user modifies CSS in Code tab, THE Editor System SHALL apply changes to the element's inline style attribute immediately
+5. WHEN the user modifies HTML in HTML tab, THE Editor System SHALL replace the element in the DOM immediately
+6. WHEN the user adds component annotations in Component tab, THE Editor System SHALL add data-* attributes to the element immediately
+7. THE Editor System SHALL maintain the selected element reference during HTML Source synchronization
+8. THE Editor System SHALL preserve the Canvas scroll position during HTML Source synchronization
+
+### Requirement 17
 
 **User Story:** As a user, I want basic undo and redo functionality, so that I can revert mistakes during editing
 

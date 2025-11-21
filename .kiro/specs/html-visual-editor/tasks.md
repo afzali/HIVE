@@ -139,80 +139,111 @@
     - Test highlight box calculation accuracy
     - _Requirements: 4.2_
 
-- [x] 6. Implement Property Panel for element editing
+- [-] 6. Implement Property Panel with tabbed interface for element editing
+
+
+  - [ ] 6.1 Create PropertyPanel.svelte component with tabbed structure
 
 
 
-  - [x] 6.1 Create PropertyPanel.svelte component structure
 
 
     - Design right sidebar layout using Tailwind CSS
-    - Use shadcn-svelte Collapsible for collapsible sections
+    - Implement tabbed interface using shadcn-svelte Tabs component with Design, Component, Code, HTML, Chat tabs
     - Implement visibility toggle based on selectedElement state
-    - Create sections: HTML Properties, Styles, Typography
     - Style with fixed positioning and scrollable content
-    - _Requirements: 4.3, 5.1_
-  
-  - [x] 6.2 Implement HTML properties editor
-
-    - Display element tag name using shadcn-svelte Label (read-only for MVP)
-    - Create shadcn-svelte Input field for id attribute with live update
-    - Implement class list editor with shadcn-svelte Badge and Button for add/remove
-    - Create generic attributes editor using shadcn-svelte Input for custom attributes
-    - Apply changes directly to selectedElement DOM node
-    - _Requirements: 5.6, 4.4_
-  
-  - [x] 6.3 Implement style properties editor
-
-    - Create four shadcn-svelte Input components for padding (top, right, bottom, left) with "Padding" label
-    - Create four shadcn-svelte Input components for margin (top, right, bottom, left) with "Margin" label
-    - Create width and height inputs using shadcn-svelte Input with Select for unit selector (px, %, auto)
-    - Create display property using shadcn-svelte Select as single-select (block, inline, flex, grid, none)
-    - Apply style changes immediately to element.style (no debounce) for instant visual feedback
-    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.10_
+    - Maintain active tab selection when switching between elements
+    - _Requirements: 5.1, 5.7_
   
 
-  - [x] 6.4 Implement text content editor
+
+  - [ ] 6.2 Implement Design tab with comprehensive visual controls similar to CSS Pro
+    - Create spacing section with visual box model for padding and margin on all four sides with drag-to-adjust
+    - Create dimensions section with width, height, border-radius controls and unit selectors (px, %, em, rem, auto)
+    - Create typography section with font-family, font-size, font-weight, line-height, letter-spacing, text-align, text-decoration, color controls
+    - Create background section with solid colors, gradients, and background images with preset options
+    - Create border section with border-width, border-style, border-color controls
+    - Create display and positioning section with display type, position, top, right, bottom, left, z-index controls
+    - Create effects section with box-shadow, text-shadow, opacity, and CSS filters controls
+    - Create flexbox section (shown when display is flex) with justify-content, align-items, flex-direction, flex-wrap controls
+    - Add inline text editor for elements with text content
+    - Add class list editor with shadcn-svelte Badge and Button for add/remove
+    - Apply all style changes immediately to element.style in DOM for instant visual feedback
 
 
-    - Detect if selected element contains text content
-    - Create shadcn-svelte Textarea for editing textContent or innerHTML
-    - Implement debounced updates (300ms) on input event
-    - Implement immediate update on focusout event
-    - Handle special characters and HTML entities
-    - _Requirements: 5.7, 5.8_
+
+
+    - _Requirements: 5A.1, 5A.2, 5A.3, 5A.4, 5A.5, 5A.6, 5A.7, 5A.8, 5A.9, 5A.10, 5A.11_
   
-  - [x] 6.5 Create property change handler
+  - [ ] 6.3 Implement Component tab with annotation controls
+    - Create Component tab content with component annotation interface
+    - Implement component type selector using shadcn-svelte Select (Component, Page, Panel, Widget, None)
+    - Add component name input field with PascalCase validation using shadcn-svelte Input
+    - Add route path input field (shown only for Page type) using shadcn-svelte Input
+    - Create loop annotation section with "item in items" format input and key field using shadcn-svelte Input
+    - Create props section with dynamic add/remove props using shadcn-svelte Button and Input (data-prop-* format)
+    - Add navigation annotation input for route paths using shadcn-svelte Input
+    - Add conditional rendering controls for data-if and data-else using shadcn-svelte Checkbox and Input
 
-    - Write applyStyleProperty utility function to apply styles immediately to element.style
-    - Implement immediate DOM update for style properties (no debounce)
-    - Implement debounced HTML extraction (500ms) to sync htmlSource store
-    - Record change in history for undo/redo
-    - Maintain scroll position and selected element during sync
-    - _Requirements: 5.5, 5.6, 12.1, 12.4, 12.5, 12.6, 12.7_
 
-  - [x] 6.6 Implement HTML sync utilities
+    - Implement component library dropdown using shadcn-svelte Select to reuse saved component definitions
+    - Add save component button to store current annotations in library using shadcn-svelte Button
+    - Apply all data-* attributes to selected element immediately when annotations change
+    - _Requirements: 14.1, 14.2, 14.3, 14.4, 14.5, 14.6, 14.7, 14.8, 14.9, 14.10, 14.11, 14.12_
+  
+
+  - [x] 6.4 Implement Code tab with CSS editor
+
+
+    - Create Code tab content with CSS code editor using Monaco Editor
+    - Extract and display most important CSS styles that apply to selected element (computed + inline styles)
+    - Implement live CSS validation with inline error indicators
+    - Apply CSS changes to selected element's inline style immediately in DOM on valid input
+    - Sync changes to HTML Source with 500ms debounce
+    - Handle CSS parsing errors gracefully without breaking the interface
+    - _Requirements: 13.1, 13.2, 13.3, 13.7, 13.8, 15.2, 15.3_
+  
+  - [ ] 6.5 Implement HTML tab with HTML editor
+    - Create HTML tab content with HTML code editor using Monaco Editor
+    - Display complete outerHTML of selected element including all children and attributes
+    - Implement live HTML validation with inline error indicators
+    - Apply HTML changes by replacing selected element in Canvas DOM immediately on valid input
+    - Sync changes to HTML Source with 500ms debounce
+    - Handle HTML parsing errors gracefully and prevent DOM corruption
+    - _Requirements: 13.4, 13.5, 13.6, 13.7, 13.8, 15.2, 15.5_
+
+  - [ ] 6.6 Implement Chat tab with basic chat structure
+    - Create Chat tab content with simple chat interface layout
+    - Implement message history display area using shadcn-svelte ScrollArea
+    - Create message input field using shadcn-svelte Input with send button
+    - Add model selector dropdown using shadcn-svelte Select for choosing AI models
+    - Maintain conversation history during editing session in scrollable area
+    - Implement basic chat structure without advanced AI integration for initial version
+    - _Requirements: 15.1, 15.2, 15.3, 15.4, 15.5_
+  
+  - [ ] 6.7 Implement Component Library for reusable annotations
+    - Create ComponentLibrary utility class in JavaScript to manage saved component definitions
+    - Implement saveComponent function to store component annotations with name as key
+    - Implement loadComponent function to retrieve saved component annotations
+    - Implement listComponents function to get all saved component names for dropdown
+    - Store component library in localStorage for persistence across sessions
+    - Create component definition format including all data-* attributes and their values
+    - Add validation to prevent overwriting existing components without confirmation
+    - Export ComponentLibrary for use in Component tab
+    - _Requirements: 14.11, 14.12_
+
+  - [ ] 6.8 Create shared property change utilities for immediate DOM updates
+    - Write applyStyleProperty utility function to apply styles immediately to element.style in DOM
+    - Write applyHTMLChange utility function to replace element in DOM immediately
+    - Write applyDataAttribute utility function to add/remove data-* attributes immediately in DOM
+    - Implement immediate DOM update for all property changes (no debounce)
+    - Implement debounced HTML extraction (500ms) to sync htmlSource store after DOM changes
+    - Record all changes in history for undo/redo functionality
+    - Maintain Canvas scroll position and selected element reference during HTML Source sync
     - Create extractHTMLFromIframe utility function to get complete HTML using documentElement.outerHTML
     - Create debounced syncHTMLSource function (500ms delay) to update htmlSource store
-    - Preserve scroll position and selectedElement during sync
-    - Add error handling for iframe access issues
-    - Export utilities for use in property changes and element operations
-    - Integrate syncHTMLSource into all PropertyPanel change handlers
-    - _Requirements: 8.1, 12.1, 12.4, 12.5_
-  
-  - [x] 6.7 Fix PropertyPanel immediate updates and add margin controls
-
-
-
-    - Fix text content to update immediately on input with 300ms debounce AND on focusout
-    - Fix padding inputs to apply changes immediately (remove any debounce)
-    - Add margin controls (top, right, bottom, left) with visual label "Margin"
-    - Add visual label "Padding" above padding controls to distinguish from margin
-    - Fix display Select to be single-select only (not multiple)
-    - Ensure all style changes apply to element.style immediately
-    - Ensure HTML Source syncs with 500ms debounce after any change
-    - Test that selected element reference is maintained during sync
-    - _Requirements: 5.1, 5.2, 5.4, 5.5, 5.6, 5.7, 5.10, 12.1, 12.4, 12.6, 12.7_
+    - Export utilities for use across all PropertyPanel tabs (Design, Code, HTML, Component)
+    - _Requirements: 16.1, 16.2, 16.3, 16.4, 16.5, 16.6, 16.7, 16.8_
 
   - [ ]* 6.8 Write component tests for PropertyPanel
     - Test property panel displays correct values for selected element
