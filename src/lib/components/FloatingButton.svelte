@@ -1,7 +1,23 @@
 <script>
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
-	import { currentMode, viewportSize } from '$lib/stores.js';
+	import { Button } from '$lib/components/ui/button';
+	import { currentMode, viewportSize, layersPanelOpen } from '$lib/stores.js';
 	import { VIEWPORT_PRESETS } from '$lib/types.js';
+	import { 
+		Play, 
+		Pause, 
+		Eye, 
+		Layers, 
+		FolderOpen, 
+		Code, 
+		Monitor, 
+		Tablet, 
+		Smartphone, 
+		Settings, 
+		Save, 
+		X,
+		MoreHorizontal
+	} from 'lucide-svelte';
 
 	/**
 	 * @type {function(string): void} onModeChange - Callback when mode changes
@@ -15,6 +31,12 @@
 
 	/** @type {boolean} */
 	let isOpen = false;
+
+	/** @type {boolean} */
+	let inspectPaused = false;
+
+	/** @type {boolean} */
+	let assetsPanelOpen = false;
 
 	/**
 	 * Handle mode selection
@@ -42,184 +64,207 @@
 		viewportSize.set(size);
 		onResponsiveModeChange(size);
 	}
+
+	/**
+	 * Toggle inspect mode
+	 */
+	function toggleInspect() {
+		inspectPaused = !inspectPaused;
+		// TODO: Implement inspect pause/resume logic
+	}
+
+	/**
+	 * Toggle layers panel
+	 */
+	function toggleLayersPanel() {
+		layersPanelOpen.update(open => !open);
+	}
+
+	/**
+	 * Toggle assets panel
+	 */
+	function toggleAssetsPanel() {
+		assetsPanelOpen = !assetsPanelOpen;
+		// TODO: Implement assets panel logic
+	}
+
+	/**
+	 * Save current work
+	 */
+	function handleSave() {
+		// TODO: Implement save functionality
+		console.log('Save clicked');
+	}
+
+	/**
+	 * Exit edit mode
+	 */
+	function exitEditMode() {
+		handleModeChange('preview');
+	}
 </script>
 
-<div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
-	<DropdownMenu.Root bind:open={isOpen}>
-		<DropdownMenu.Trigger
-			class="inline-flex items-center justify-center rounded-full w-16 h-16 bg-primary text-primary-foreground shadow-2xl hover:scale-110 transition-transform cursor-pointer hover:bg-primary/90"
-		>
-			{#if $currentMode === 'preview'}
-				<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-					></path>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-					></path>
-				</svg>
-			{:else if $currentMode === 'edit'}
-				<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-					></path>
-				</svg>
-			{:else if $currentMode === 'code'}
-				<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-					></path>
-				</svg>
-			{:else}
-				<svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"
-					></path>
-					<path
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						stroke-width="2"
-						d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-					></path>
-				</svg>
-			{/if}
-		</DropdownMenu.Trigger>
+{#if $currentMode === 'edit'}
+	<!-- Edit Mode Dock -->
+	<div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+		<div class="flex items-center gap-1 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-3 shadow-2xl">
+			<!-- Resume/Pause Inspect -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+				onclick={toggleInspect}
+				title={inspectPaused ? 'Resume Inspect' : 'Pause Inspect'}
+			>
+				{#if inspectPaused}
+					<Play class="w-5 h-5" />
+				{:else}
+					<Pause class="w-5 h-5" />
+				{/if}
+			</Button>
 
-		<DropdownMenu.Content class="w-56 mb-2">
-			<DropdownMenu.Group>
-				<DropdownMenu.Label>Editor Mode</DropdownMenu.Label>
-				<DropdownMenu.Separator />
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
 
-				<DropdownMenu.Item onclick={() => handleModeChange('preview')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-						></path>
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-						></path>
-					</svg>
-					Preview
-					{#if $currentMode === 'preview'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-					{/if}
-				</DropdownMenu.Item>
+			<!-- Show Layers Panel -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors {$layersPanelOpen ? 'bg-gray-700/70 text-white' : ''}"
+				onclick={toggleLayersPanel}
+				title="Toggle Layers Panel"
+			>
+				<Layers class="w-5 h-5" />
+			</Button>
 
-				<DropdownMenu.Item onclick={() => handleModeChange('edit')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-						></path>
-					</svg>
-					Edit
-					{#if $currentMode === 'edit'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-					{/if}
-				</DropdownMenu.Item>
+			<!-- Show Assets Panel -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors {assetsPanelOpen ? 'bg-gray-700/70 text-white' : ''}"
+				onclick={toggleAssetsPanel}
+				title="Toggle Assets Panel"
+			>
+				<FolderOpen class="w-5 h-5" />
+			</Button>
 
-				<DropdownMenu.Item onclick={() => handleModeChange('code')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"
-						></path>
-					</svg>
-					Code
-					{#if $currentMode === 'code'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-					{/if}
-				</DropdownMenu.Item>
-			</DropdownMenu.Group>
+			<!-- Show Code Editor -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+				onclick={() => handleModeChange('code')}
+				title="Open Code Editor"
+			>
+				<Code class="w-5 h-5" />
+			</Button>
 
-			<DropdownMenu.Separator />
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
 
-			<DropdownMenu.Group>
-				<DropdownMenu.Label>Viewport Size</DropdownMenu.Label>
-				<DropdownMenu.Separator />
-
-				<DropdownMenu.Item onclick={() => handleResponsiveChange('desktop')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-						></path>
-					</svg>
-					Desktop (1920x1080)
+			<!-- Responsive Mode Selector -->
+			<DropdownMenu.Root>
+				<DropdownMenu.Trigger
+					class="inline-flex items-center justify-center w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+					title="Select Responsive Mode"
+				>
 					{#if $viewportSize.preset === 'desktop'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
+						<Monitor class="w-5 h-5" />
+					{:else if $viewportSize.preset === 'tablet'}
+						<Tablet class="w-5 h-5" />
+					{:else if $viewportSize.preset === 'mobile'}
+						<Smartphone class="w-5 h-5" />
+					{:else}
+						<Settings class="w-5 h-5" />
 					{/if}
-				</DropdownMenu.Item>
+				</DropdownMenu.Trigger>
+				<DropdownMenu.Content class="w-48 mb-2">
+					<DropdownMenu.Group>
+						<DropdownMenu.Label>Viewport Size</DropdownMenu.Label>
+						<DropdownMenu.Separator />
 
-				<DropdownMenu.Item onclick={() => handleResponsiveChange('tablet')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"
-						></path>
-					</svg>
-					Tablet (768x1024)
-					{#if $viewportSize.preset === 'tablet'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-					{/if}
-				</DropdownMenu.Item>
+						<DropdownMenu.Item onclick={() => handleResponsiveChange('desktop')}>
+							<Monitor class="w-4 h-4 mr-2" />
+							Desktop (1920x1080)
+							{#if $viewportSize.preset === 'desktop'}
+								<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+								</svg>
+							{/if}
+						</DropdownMenu.Item>
 
-				<DropdownMenu.Item onclick={() => handleResponsiveChange('mobile')}>
-					<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							stroke-width="2"
-							d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"
-						></path>
-					</svg>
-					Mobile (375x667)
-					{#if $viewportSize.preset === 'mobile'}
-						<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
-						</svg>
-					{/if}
-				</DropdownMenu.Item>
-			</DropdownMenu.Group>
-		</DropdownMenu.Content>
-	</DropdownMenu.Root>
-</div>
+						<DropdownMenu.Item onclick={() => handleResponsiveChange('tablet')}>
+							<Tablet class="w-4 h-4 mr-2" />
+							Tablet (768x1024)
+							{#if $viewportSize.preset === 'tablet'}
+								<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+								</svg>
+							{/if}
+						</DropdownMenu.Item>
+
+						<DropdownMenu.Item onclick={() => handleResponsiveChange('mobile')}>
+							<Smartphone class="w-4 h-4 mr-2" />
+							Mobile (375x667)
+							{#if $viewportSize.preset === 'mobile'}
+								<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+								</svg>
+							{/if}
+						</DropdownMenu.Item>
+
+						<DropdownMenu.Separator />
+
+						<DropdownMenu.Item onclick={() => handleResponsiveChange('custom')}>
+							<Settings class="w-4 h-4 mr-2" />
+							Custom Size
+							{#if $viewportSize.preset === 'custom'}
+								<svg class="w-4 h-4 ml-auto text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+									<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+								</svg>
+							{/if}
+						</DropdownMenu.Item>
+					</DropdownMenu.Group>
+				</DropdownMenu.Content>
+			</DropdownMenu.Root>
+
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
+
+			<!-- Save -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+				onclick={handleSave}
+				title="Save"
+			>
+				<Save class="w-5 h-5" />
+			</Button>
+
+			<!-- Close Edit Mode -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
+				onclick={exitEditMode}
+				title="Exit Edit Mode"
+			>
+				<X class="w-5 h-5" />
+			</Button>
+		</div>
+	</div>
+{:else}
+	<!-- Simple Mode Button -->
+	<div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
+		<Button
+			class="inline-flex items-center justify-center rounded-full w-16 h-16 bg-primary text-primary-foreground shadow-2xl hover:scale-110 transition-transform cursor-pointer hover:bg-primary/90"
+			onclick={() => handleModeChange('edit')}
+			title="Enter Edit Mode"
+		>
+			<Eye class="w-8 h-8" />
+		</Button>
+	</div>
+{/if}
+
+
