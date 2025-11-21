@@ -2,7 +2,7 @@
 	import { Button } from '$lib/components/ui/button';
 	import { layersPanelOpen, iframeDocument, selectedElement } from '$lib/stores.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
-	import { X, ChevronRight, ChevronDown, Layers, Trash2 } from 'lucide-svelte';
+	import { X, ChevronRight, ChevronDown, Layers, Trash2, ArrowUp, ArrowDown } from 'lucide-svelte';
 
 	let layerTree = [];
 	let panelElement = null;
@@ -90,6 +90,41 @@
 	}
 
 	/**
+	 * Expand all parent nodes to show a specific hiveId
+	 */
+	function expandToNode(hiveId) {
+		function findAndExpand(nodes) {
+			for (const node of nodes) {
+				if (node.hiveId === hiveId) {
+					return true;
+				}
+				if (node.children.length > 0) {
+					if (findAndExpand(node.children)) {
+						node.isExpanded = true;
+						return true;
+					}
+				}
+			}
+			return false;
+		}
+		
+		findAndExpand(layerTree);
+		layerTree = layerTree;
+	}
+
+	/**
+	 * Scroll to element in tree panel
+	 */
+	function scrollToNodeInTree(hiveId) {
+		setTimeout(() => {
+			const nodeElement = panelElement?.querySelector(`[data-node-id="${hiveId}"]`);
+			if (nodeElement) {
+				nodeElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			}
+		}, 100);
+	}
+
+	/**
 	 * Click element in iframe by hiveId (from tree)
 	 */
 	function clickElement(hiveId) {
@@ -101,6 +136,10 @@
 			isClickingFromTree = true;
 			selectedHiveId = hiveId;
 			element.click();
+			
+			// Scroll element into view in iframe
+			element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+			
 			// Reset flag after a short delay
 			setTimeout(() => {
 				isClickingFromTree = false;
@@ -133,6 +172,46 @@
 			syncHTMLSource();
 			
 			// Rebuild tree
+			refreshTree();
+		}
+	}
+
+	/**
+	 * Move element up
+	 */
+	function moveElementUp(hiveId, event) {
+		event.stopPropagation();
+		
+		if (!hiveId || !$iframeDocument) return;
+		
+		const element = $iframeDocument.querySelector(`[data-hive-id="${hiveId}"]`);
+		if (!element || !element.parentElement) return;
+		
+		const prevSibling = element.previousElementSibling;
+		if (prevSibling) {
+			console.log('⬆️ Moving element up:', element.tagName, hiveId);
+			element.parentElement.insertBefore(element, prevSibling);
+			syncHTMLSource();
+			refreshTree();
+		}
+	}
+
+	/**
+	 * Move element down
+	 */
+	function moveElementDown(hiveId, event) {
+		event.stopPropagation();
+		
+		if (!hiveId || !$iframeDocument) return;
+		
+		const element = $iframeDocument.querySelector(`[data-hive-id="${hiveId}"]`);
+		if (!element || !element.parentElement) return;
+		
+		const nextSibling = element.nextElementSibling;
+		if (nextSibling) {
+			console.log('⬇️ Moving element down:', element.tagName, hiveId);
+			element.parentElement.insertBefore(nextSibling, element);
+			syncHTMLSource();
 			refreshTree();
 		}
 	}
@@ -184,8 +263,15 @@
 		if (hiveId && hiveId !== selectedHiveId) {
 			console.log('👆 User clicked in iframe -> select in tree:', hiveId);
 			selectedHiveId = hiveId;
-			// Force re-render
-			layerTree = layerTree;
+			
+			// Expand parent nodes to show this element
+			expandToNode(hiveId);
+			
+			// Scroll to element in tree
+			scrollToNodeInTree(hiveId);
+			
+			// Scroll element into view in iframe
+			$selectedElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
 		}
 	}
 </script>
@@ -252,6 +338,7 @@
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<div 
+			data-node-id={node.hiveId}
 			class="flex items-center gap-1 py-1 px-2 rounded hover:bg-gray-800/50 cursor-pointer group"
 			class:selected={selectedHiveId === node.hiveId}
 			style="margin-left: {level * 16}px"
@@ -281,15 +368,31 @@
 				{getDisplayName(node)}
 			</span>
 
-			<!-- Delete Button (show on hover, hide for body) -->
+			<!-- Action Buttons (show on hover, hide for body) -->
 			{#if node.tag !== 'body'}
-				<button
-					class="w-5 h-5 p-0 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded opacity-0 group-hover:opacity-100 transition-opacity"
-					onclick={(e) => deleteElement(node.hiveId, e)}
-					title="Delete Element"
-				>
-					<Trash2 class="w-3 h-3" />
-				</button>
+				<div class="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+					<button
+						class="w-5 h-5 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded"
+						onclick={(e) => moveElementUp(node.hiveId, e)}
+						title="Move Up"
+					>
+						<ArrowUp class="w-3 h-3" />
+					</button>
+					<button
+						class="w-5 h-5 p-0 text-gray-400 hover:text-white hover:bg-gray-700 rounded"
+						onclick={(e) => moveElementDown(node.hiveId, e)}
+						title="Move Down"
+					>
+						<ArrowDown class="w-3 h-3" />
+					</button>
+					<button
+						class="w-5 h-5 p-0 text-gray-400 hover:text-red-400 hover:bg-gray-700 rounded"
+						onclick={(e) => deleteElement(node.hiveId, e)}
+						title="Delete Element"
+					>
+						<Trash2 class="w-3 h-3" />
+					</button>
+				</div>
 			{/if}
 		</div>
 
