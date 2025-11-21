@@ -43,13 +43,27 @@
 	}
 
 	/**
+	 * Get display label
+	 */
+	function getDisplayLabel(displayValue) {
+		const labels = {
+			'block': 'Block',
+			'inline': 'Inline',
+			'inline-block': 'Inline Block',
+			'flex': 'Flex',
+			'grid': 'Grid',
+			'none': 'None'
+		};
+		return labels[displayValue] || 'Block';
+	}
+
+	/**
 	 * Handle display change
 	 */
 	function handleDisplayChange(newDisplay) {
 		if ($selectedElement && newDisplay) {
 			const element = $selectedElement;
 			applyStyleProperty(element, 'display', newDisplay);
-			display = newDisplay;
 			onPropertyChange('display', newDisplay);
 			syncHTMLSource();
 		}
@@ -67,6 +81,16 @@
 		}
 	}
 
+	// Watch for display changes from Select component
+	$: if (display && $selectedElement) {
+		handleDisplayChange(display);
+	}
+
+	// Watch for position changes from Select component  
+	$: if (position && $selectedElement) {
+		handleStyleChange('position', position);
+	}
+
 	// Export display for FlexboxSection
 	export { display };
 </script>
@@ -76,39 +100,33 @@
 	
 	<div class="space-y-2">
 		<Label>Display</Label>
-		<Select.Root type="single"
-			value={display}
-			onValueChange={handleDisplayChange}
-		>
+		<Select.Root type="single" bind:value={display}>
 			<Select.Trigger class="w-full">
-				<Select.Value placeholder="Select display" />
+				{getDisplayLabel(display)}
 			</Select.Trigger>
 			<Select.Content>
-				<Select.Item value="block">Block</Select.Item>
-				<Select.Item value="inline">Inline</Select.Item>
-				<Select.Item value="inline-block">Inline Block</Select.Item>
-				<Select.Item value="flex">Flex</Select.Item>
-				<Select.Item value="grid">Grid</Select.Item>
-				<Select.Item value="none">None</Select.Item>
+				<Select.Item value="block" label="Block">Block</Select.Item>
+				<Select.Item value="inline" label="Inline">Inline</Select.Item>
+				<Select.Item value="inline-block" label="Inline Block">Inline Block</Select.Item>
+				<Select.Item value="flex" label="Flex">Flex</Select.Item>
+				<Select.Item value="grid" label="Grid">Grid</Select.Item>
+				<Select.Item value="none" label="None">None</Select.Item>
 			</Select.Content>
 		</Select.Root>
 	</div>
 
 	<div class="space-y-2">
 		<Label>Position</Label>
-		<Select.Root type="single"
-			value={position}
-			onValueChange={(value) => handleStyleChange('position', value)}
-		>
+		<Select.Root type="single" bind:value={position}>
 			<Select.Trigger class="w-full">
-				<Select.Value placeholder="Static" />
+				{position ? position.charAt(0).toUpperCase() + position.slice(1) : 'Static'}
 			</Select.Trigger>
 			<Select.Content>
-				<Select.Item value="static">Static</Select.Item>
-				<Select.Item value="relative">Relative</Select.Item>
-				<Select.Item value="absolute">Absolute</Select.Item>
-				<Select.Item value="fixed">Fixed</Select.Item>
-				<Select.Item value="sticky">Sticky</Select.Item>
+				<Select.Item value="static" label="Static">Static</Select.Item>
+				<Select.Item value="relative" label="Relative">Relative</Select.Item>
+				<Select.Item value="absolute" label="Absolute">Absolute</Select.Item>
+				<Select.Item value="fixed" label="Fixed">Fixed</Select.Item>
+				<Select.Item value="sticky" label="Sticky">Sticky</Select.Item>
 			</Select.Content>
 		</Select.Root>
 	</div>

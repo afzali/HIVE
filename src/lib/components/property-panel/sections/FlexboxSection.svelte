@@ -51,6 +51,77 @@
 		updateElementProperties($selectedElement);
 	}
 
+	// Watch for changes from Select components
+	$: if (justifyContent && $selectedElement) {
+		handleStyleChange('justifyContent', justifyContent);
+	}
+
+	$: if (alignItems && $selectedElement) {
+		handleStyleChange('alignItems', alignItems);
+	}
+
+	$: if (flexDirection && $selectedElement) {
+		handleStyleChange('flexDirection', flexDirection);
+	}
+
+	$: if (flexWrap && $selectedElement) {
+		handleStyleChange('flexWrap', flexWrap);
+	}
+
+	/**
+	 * Get justify content label
+	 */
+	function getJustifyContentLabel(value) {
+		const labels = {
+			'flex-start': 'Start',
+			'center': 'Center',
+			'flex-end': 'End',
+			'space-between': 'Space Between',
+			'space-around': 'Space Around',
+			'space-evenly': 'Space Evenly'
+		};
+		return labels[value] || 'Start';
+	}
+
+	/**
+	 * Get align items label
+	 */
+	function getAlignItemsLabel(value) {
+		const labels = {
+			'stretch': 'Stretch',
+			'flex-start': 'Start',
+			'center': 'Center',
+			'flex-end': 'End',
+			'baseline': 'Baseline'
+		};
+		return labels[value] || 'Stretch';
+	}
+
+	/**
+	 * Get flex direction label
+	 */
+	function getFlexDirectionLabel(value) {
+		const labels = {
+			'row': 'Row',
+			'column': 'Column',
+			'row-reverse': 'Row Reverse',
+			'column-reverse': 'Column Reverse'
+		};
+		return labels[value] || 'Row';
+	}
+
+	/**
+	 * Get flex wrap label
+	 */
+	function getFlexWrapLabel(value) {
+		const labels = {
+			'nowrap': 'No Wrap',
+			'wrap': 'Wrap',
+			'wrap-reverse': 'Wrap Reverse'
+		};
+		return labels[value] || 'No Wrap';
+	}
+
 	/**
 	 * Handle style change
 	 */
@@ -71,38 +142,32 @@
 		<div class="grid grid-cols-2 gap-2">
 			<div class="space-y-2">
 				<Label>Justify Content</Label>
-				<Select.Root type="single"
-					value={justifyContent}
-					onValueChange={(value) => handleStyleChange('justifyContent', value)}
-				>
+				<Select.Root type="single" bind:value={justifyContent}>
 					<Select.Trigger class="w-full">
-						<Select.Value placeholder="Start" />
+						{getJustifyContentLabel(justifyContent)}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="flex-start">Start</Select.Item>
-						<Select.Item value="center">Center</Select.Item>
-						<Select.Item value="flex-end">End</Select.Item>
-						<Select.Item value="space-between">Space Between</Select.Item>
-						<Select.Item value="space-around">Space Around</Select.Item>
-						<Select.Item value="space-evenly">Space Evenly</Select.Item>
+						<Select.Item value="flex-start" label="Start">Start</Select.Item>
+						<Select.Item value="center" label="Center">Center</Select.Item>
+						<Select.Item value="flex-end" label="End">End</Select.Item>
+						<Select.Item value="space-between" label="Space Between">Space Between</Select.Item>
+						<Select.Item value="space-around" label="Space Around">Space Around</Select.Item>
+						<Select.Item value="space-evenly" label="Space Evenly">Space Evenly</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
 			<div class="space-y-2">
 				<Label>Align Items</Label>
-				<Select.Root type="single"
-					value={alignItems}
-					onValueChange={(value) => handleStyleChange('alignItems', value)}
-				>
+				<Select.Root type="single" bind:value={alignItems}>
 					<Select.Trigger class="w-full">
-						<Select.Value placeholder="Stretch" />
+						{getAlignItemsLabel(alignItems)}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="stretch">Stretch</Select.Item>
-						<Select.Item value="flex-start">Start</Select.Item>
-						<Select.Item value="center">Center</Select.Item>
-						<Select.Item value="flex-end">End</Select.Item>
-						<Select.Item value="baseline">Baseline</Select.Item>
+						<Select.Item value="stretch" label="Stretch">Stretch</Select.Item>
+						<Select.Item value="flex-start" label="Start">Start</Select.Item>
+						<Select.Item value="center" label="Center">Center</Select.Item>
+						<Select.Item value="flex-end" label="End">End</Select.Item>
+						<Select.Item value="baseline" label="Baseline">Baseline</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
@@ -111,34 +176,28 @@
 		<div class="grid grid-cols-2 gap-2">
 			<div class="space-y-2">
 				<Label>Direction</Label>
-				<Select.Root type="single"
-					value={flexDirection}
-					onValueChange={(value) => handleStyleChange('flexDirection', value)}
-				>
+				<Select.Root type="single" bind:value={flexDirection}>
 					<Select.Trigger class="w-full">
-						<Select.Value placeholder="Row" />
+						{getFlexDirectionLabel(flexDirection)}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="row">Row</Select.Item>
-						<Select.Item value="column">Column</Select.Item>
-						<Select.Item value="row-reverse">Row Reverse</Select.Item>
-						<Select.Item value="column-reverse">Column Reverse</Select.Item>
+						<Select.Item value="row" label="Row">Row</Select.Item>
+						<Select.Item value="column" label="Column">Column</Select.Item>
+						<Select.Item value="row-reverse" label="Row Reverse">Row Reverse</Select.Item>
+						<Select.Item value="column-reverse" label="Column Reverse">Column Reverse</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
 			<div class="space-y-2">
 				<Label>Wrap</Label>
-				<Select.Root type="single"
-					value={flexWrap}
-					onValueChange={(value) => handleStyleChange('flexWrap', value)}
-				>
+				<Select.Root type="single" bind:value={flexWrap}>
 					<Select.Trigger class="w-full">
-						<Select.Value placeholder="No Wrap" />
+						{getFlexWrapLabel(flexWrap)}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="nowrap">No Wrap</Select.Item>
-						<Select.Item value="wrap">Wrap</Select.Item>
-						<Select.Item value="wrap-reverse">Wrap Reverse</Select.Item>
+						<Select.Item value="nowrap" label="No Wrap">No Wrap</Select.Item>
+						<Select.Item value="wrap" label="Wrap">Wrap</Select.Item>
+						<Select.Item value="wrap-reverse" label="Wrap Reverse">Wrap Reverse</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>

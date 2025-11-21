@@ -17,7 +17,7 @@
 </script>
 
 {#if $selectedElement}
-	<div class="fixed right-0 top-0 h-full w-80 bg-background border-l border-border overflow-y-auto z-30 shadow-xl">
+	<div class="fixed right-0 top-0 h-full bg-background border-l border-border overflow-y-auto z-30 shadow-xl" style="width: 480px;">
 		<div class="p-4 h-full flex flex-col">
 			<!-- Header -->
 			<div class="border-b border-border pb-4 mb-4">

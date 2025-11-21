@@ -38,12 +38,20 @@
 		
 		borderWidth = getStyleValue(element.style.borderWidth, styles.borderWidth);
 		borderStyle = getStyleValue(element.style.borderStyle, styles.borderStyle);
-		borderColor = getStyleValue(element.style.borderColor, styles.borderColor);
+		
+		// Convert border color to hex for color input
+		const rawBorderColor = getStyleValue(element.style.borderColor, styles.borderColor);
+		borderColor = rgbToHex(rawBorderColor);
 	}
 
 	$: if ($selectedElement && $selectedElement !== lastProcessedElement) {
 		lastProcessedElement = $selectedElement;
 		updateElementProperties($selectedElement);
+	}
+
+	// Watch for changes from Select component
+	$: if (borderStyle && $selectedElement) {
+		handleStyleChange('borderStyle', borderStyle);
 	}
 
 	/**
@@ -72,6 +80,41 @@
 			syncHTMLSource();
 		}
 	}
+
+	/**
+	 * Convert RGB color to hex format for color input
+	 */
+	function rgbToHex(rgb) {
+		if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return '';
+		
+		// If already hex, return as is
+		if (rgb.startsWith('#')) return rgb;
+		
+		// Extract RGB values
+		const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+		if (!match) return rgb;
+		
+		const r = parseInt(match[1]);
+		const g = parseInt(match[2]);
+		const b = parseInt(match[3]);
+		
+		return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+	}
+
+	/**
+	 * Clear color (remove property)
+	 */
+	function clearColor(property) {
+		if ($selectedElement) {
+			const element = $selectedElement;
+			element.style.removeProperty(property);
+			onPropertyChange(property, '');
+			
+			if (property === 'borderColor') borderColor = '';
+			
+			syncHTMLSource();
+		}
+	}
 </script>
 
 <div class="space-y-4">
@@ -89,18 +132,15 @@
 		</div>
 		<div class="space-y-2">
 			<Label>Style</Label>
-			<Select.Root type="single"
-				value={borderStyle}
-				onValueChange={(value) => handleStyleChange('borderStyle', value)}
-			>
+			<Select.Root type="single" bind:value={borderStyle}>
 				<Select.Trigger class="w-full">
-					<Select.Value placeholder="None" />
+					{borderStyle ? borderStyle.charAt(0).toUpperCase() + borderStyle.slice(1) : 'None'}
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="none">None</Select.Item>
-					<Select.Item value="solid">Solid</Select.Item>
-					<Select.Item value="dashed">Dashed</Select.Item>
-					<Select.Item value="dotted">Dotted</Select.Item>
+					<Select.Item value="none" label="None">None</Select.Item>
+					<Select.Item value="solid" label="Solid">Solid</Select.Item>
+					<Select.Item value="dashed" label="Dashed">Dashed</Select.Item>
+					<Select.Item value="dotted" label="Dotted">Dotted</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -108,12 +148,25 @@
 
 	<div class="space-y-2">
 		<Label for="border-color">Border Color</Label>
-		<Input
-			id="border-color"
-			bind:value={borderColor}
-			oninput={() => handleColorChange('borderColor', borderColor)}
-			placeholder="#000000"
-			type="color"
-		/>
+		<div class="flex gap-2">
+			<Input
+				id="border-color"
+				bind:value={borderColor}
+				oninput={() => handleColorChange('borderColor', borderColor)}
+				placeholder="#000000"
+				type="color"
+				class="flex-1"
+			/>
+			<button
+				onclick={() => clearColor('borderColor')}
+				class="px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 text-xs"
+				title="Clear border color"
+			>
+				Clear
+			</button>
+		</div>
+		{#if borderColor}
+			<div class="text-xs text-muted-foreground">Current: {borderColor}</div>
+		{/if}
 	</div>
 </div>

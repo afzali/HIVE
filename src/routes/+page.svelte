@@ -166,7 +166,7 @@
 
 <main class="w-screen h-screen overflow-hidden bg-gray-900 relative">
 	<!-- Canvas Area -->
-	<div class="absolute inset-0 {$currentMode === 'edit' && $selectedElement ? 'right-80' : ''}">
+	<div class="absolute inset-0" style="{$currentMode === 'edit' && $selectedElement ? 'right: 480px;' : ''}">
 		<Canvas 
 			bind:this={canvasComponent}
 			htmlSource={$htmlSource} 

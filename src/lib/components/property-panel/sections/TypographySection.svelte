@@ -55,12 +55,24 @@
 		letterSpacing = getStyleValue(element.style.letterSpacing, styles.letterSpacing);
 		textAlign = getStyleValue(element.style.textAlign, styles.textAlign);
 		textDecoration = getStyleValue(element.style.textDecoration, styles.textDecoration);
-		color = getStyleValue(element.style.color, styles.color);
+		
+		// Convert color to hex for color input
+		const rawColor = getStyleValue(element.style.color, styles.color);
+		color = rgbToHex(rawColor);
 	}
 
 	$: if ($selectedElement && $selectedElement !== lastProcessedElement) {
 		lastProcessedElement = $selectedElement;
 		updateElementProperties($selectedElement);
+	}
+
+	// Watch for changes from Select components
+	$: if (fontWeight && $selectedElement) {
+		handleStyleChange('fontWeight', fontWeight);
+	}
+
+	$: if (textAlign && $selectedElement) {
+		handleStyleChange('textAlign', textAlign);
 	}
 
 	/**
@@ -76,6 +88,44 @@
 	}
 
 	/**
+	 * Get font weight label
+	 */
+	function getFontWeightLabel(weight) {
+		const labels = {
+			'100': 'Thin',
+			'200': 'Extra Light',
+			'300': 'Light',
+			'400': 'Normal',
+			'500': 'Medium',
+			'600': 'Semi Bold',
+			'700': 'Bold',
+			'800': 'Extra Bold',
+			'900': 'Black'
+		};
+		return labels[weight] || 'Normal';
+	}
+
+	/**
+	 * Convert RGB color to hex format for color input
+	 */
+	function rgbToHex(rgb) {
+		if (!rgb || rgb === 'transparent' || rgb === 'rgba(0, 0, 0, 0)') return '';
+		
+		// If already hex, return as is
+		if (rgb.startsWith('#')) return rgb;
+		
+		// Extract RGB values
+		const match = rgb.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+		if (!match) return rgb;
+		
+		const r = parseInt(match[1]);
+		const g = parseInt(match[2]);
+		const b = parseInt(match[3]);
+		
+		return '#' + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+	}
+
+	/**
 	 * Handle color change
 	 */
 	function handleColorChange(property, value) {
@@ -86,6 +136,22 @@
 			
 			// Update local state
 			if (property === 'color') color = value;
+			
+			syncHTMLSource();
+		}
+	}
+
+	/**
+	 * Clear color (set to transparent)
+	 */
+	function clearColor(property) {
+		if ($selectedElement) {
+			const element = $selectedElement;
+			element.style.removeProperty(property);
+			onPropertyChange(property, '');
+			
+			// Update local state
+			if (property === 'color') color = '';
 			
 			syncHTMLSource();
 		}
@@ -107,23 +173,20 @@
 		</div>
 		<div class="space-y-2">
 			<Label>Font Weight</Label>
-			<Select.Root type="single"
-				value={fontWeight}
-				onValueChange={(value) => handleStyleChange('fontWeight', value)}
-			>
+			<Select.Root type="single" bind:value={fontWeight}>
 				<Select.Trigger class="w-full">
-					<Select.Value placeholder="Normal" />
+					{fontWeight ? `${fontWeight} - ${getFontWeightLabel(fontWeight)}` : 'Normal'}
 				</Select.Trigger>
 				<Select.Content>
-					<Select.Item value="100">100 - Thin</Select.Item>
-					<Select.Item value="200">200 - Extra Light</Select.Item>
-					<Select.Item value="300">300 - Light</Select.Item>
-					<Select.Item value="400">400 - Normal</Select.Item>
-					<Select.Item value="500">500 - Medium</Select.Item>
-					<Select.Item value="600">600 - Semi Bold</Select.Item>
-					<Select.Item value="700">700 - Bold</Select.Item>
-					<Select.Item value="800">800 - Extra Bold</Select.Item>
-					<Select.Item value="900">900 - Black</Select.Item>
+					<Select.Item value="100" label="100 - Thin">100 - Thin</Select.Item>
+					<Select.Item value="200" label="200 - Extra Light">200 - Extra Light</Select.Item>
+					<Select.Item value="300" label="300 - Light">300 - Light</Select.Item>
+					<Select.Item value="400" label="400 - Normal">400 - Normal</Select.Item>
+					<Select.Item value="500" label="500 - Medium">500 - Medium</Select.Item>
+					<Select.Item value="600" label="600 - Semi Bold">600 - Semi Bold</Select.Item>
+					<Select.Item value="700" label="700 - Bold">700 - Bold</Select.Item>
+					<Select.Item value="800" label="800 - Extra Bold">800 - Extra Bold</Select.Item>
+					<Select.Item value="900" label="900 - Black">900 - Black</Select.Item>
 				</Select.Content>
 			</Select.Root>
 		</div>
@@ -152,30 +215,40 @@
 
 	<div class="space-y-2">
 		<Label>Text Align</Label>
-		<Select.Root type="single"
-			value={textAlign}
-			onValueChange={(value) => handleStyleChange('textAlign', value)}
-		>
+		<Select.Root type="single" bind:value={textAlign}>
 			<Select.Trigger class="w-full">
-				<Select.Value placeholder="Left" />
+				{textAlign ? textAlign.charAt(0).toUpperCase() + textAlign.slice(1) : 'Left'}
 			</Select.Trigger>
 			<Select.Content>
-				<Select.Item value="left">Left</Select.Item>
-				<Select.Item value="center">Center</Select.Item>
-				<Select.Item value="right">Right</Select.Item>
-				<Select.Item value="justify">Justify</Select.Item>
+				<Select.Item value="left" label="Left">Left</Select.Item>
+				<Select.Item value="center" label="Center">Center</Select.Item>
+				<Select.Item value="right" label="Right">Right</Select.Item>
+				<Select.Item value="justify" label="Justify">Justify</Select.Item>
 			</Select.Content>
 		</Select.Root>
 	</div>
 
 	<div class="space-y-2">
 		<Label for="color">Text Color</Label>
-		<Input
-			id="color"
-			bind:value={color}
-			oninput={() => handleColorChange('color', color)}
-			placeholder="#000000"
-			type="color"
-		/>
+		<div class="flex gap-2">
+			<Input
+				id="color"
+				bind:value={color}
+				oninput={() => handleColorChange('color', color)}
+				placeholder="#000000"
+				type="color"
+				class="flex-1"
+			/>
+			<button
+				onclick={() => clearColor('color')}
+				class="px-3 py-2 bg-secondary text-secondary-foreground rounded-md hover:bg-secondary/80 text-xs"
+				title="Clear color"
+			>
+				Clear
+			</button>
+		</div>
+		{#if color}
+			<div class="text-xs text-muted-foreground">Current: {color}</div>
+		{/if}
 	</div>
 </div>
