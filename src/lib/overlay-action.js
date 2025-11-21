@@ -58,8 +58,8 @@ export function overlayAction(iframe, options = {}) {
 			return;
 		}
 
-		// Ignore HTML and BODY
-		if (!target || target.tagName === 'HTML' || target.tagName === 'BODY') {
+		// Allow all elements including HTML and BODY
+		if (!target) {
 			if (hoverDiv.style.display !== 'none') {
 				hoverDiv.style.display = 'none';
 				hoveredElement = null;
@@ -118,7 +118,8 @@ export function overlayAction(iframe, options = {}) {
 
 		event.stopPropagation();
 
-		if (!target || target.tagName === 'HTML' || target.tagName === 'BODY') {
+		// Allow selecting any element including HTML and BODY
+		if (!target) {
 			selectedElement.set(null);
 			return;
 		}

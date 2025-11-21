@@ -1,7 +1,7 @@
 <script>
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
-	import { currentMode, viewportSize, layersPanelOpen } from '$lib/stores.js';
+	import { currentMode, viewportSize, layersPanelOpen, editToolbarOpen } from '$lib/stores.js';
 	import { VIEWPORT_PRESETS } from '$lib/types.js';
 	import { 
 		Play, 
@@ -31,9 +31,6 @@
 
 	/** @type {boolean} */
 	let isOpen = false;
-
-	/** @type {boolean} */
-	let inspectPaused = false;
 
 	/** @type {boolean} */
 	let assetsPanelOpen = false;
@@ -66,11 +63,24 @@
 	}
 
 	/**
-	 * Toggle inspect mode
+	 * Toggle inspect mode - switches between preview and edit mode
 	 */
 	function toggleInspect() {
-		inspectPaused = !inspectPaused;
-		// TODO: Implement inspect pause/resume logic
+		if ($currentMode === 'edit') {
+			// Pause: go to preview mode but keep toolbar visible
+			currentMode.set('preview');
+		} else {
+			// Resume: go back to edit mode
+			currentMode.set('edit');
+		}
+	}
+	
+	/**
+	 * Enter edit mode and show toolbar
+	 */
+	function enterEditMode() {
+		currentMode.set('edit');
+		editToolbarOpen.set(true);
 	}
 
 	/**
@@ -97,14 +107,16 @@
 	}
 
 	/**
-	 * Exit edit mode
+	 * Exit edit mode - close toolbar completely
 	 */
 	function exitEditMode() {
-		handleModeChange('preview');
+		// Close toolbar and go to preview mode
+		editToolbarOpen.set(false);
+		currentMode.set('preview');
 	}
 </script>
 
-{#if $currentMode === 'edit'}
+{#if $editToolbarOpen}
 	<!-- Edit Mode Dock -->
 	<div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
 		<div class="flex items-center gap-1 bg-gray-800/95 backdrop-blur-sm border border-gray-700/50 rounded-2xl px-4 py-3 shadow-2xl">
@@ -114,9 +126,9 @@
 				size="sm"
 				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors"
 				onclick={toggleInspect}
-				title={inspectPaused ? 'Resume Inspect' : 'Pause Inspect'}
+				title={$currentMode === 'preview' ? 'Resume Inspect' : 'Pause Inspect'}
 			>
-				{#if inspectPaused}
+				{#if $currentMode === 'preview'}
 					<Play class="w-5 h-5" />
 				{:else}
 					<Pause class="w-5 h-5" />
@@ -259,7 +271,7 @@
 	<div class="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50">
 		<Button
 			class="inline-flex items-center justify-center rounded-full w-16 h-16 bg-primary text-primary-foreground shadow-2xl hover:scale-110 transition-transform cursor-pointer hover:bg-primary/90"
-			onclick={() => handleModeChange('edit')}
+			onclick={enterEditMode}
 			title="Enter Edit Mode"
 		>
 			<Eye class="w-8 h-8" />

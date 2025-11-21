@@ -136,6 +136,18 @@ export const iframeDocument = writable(null);
 export const layersPanelOpen = writable(false);
 
 /**
+ * Inspect mode paused state
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const inspectPaused = writable(false);
+
+/**
+ * Edit toolbar visibility (stays open even in preview mode after pause)
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const editToolbarOpen = writable(false);
+
+/**
  * Loading state
  * @type {import('svelte/store').Writable<boolean>}
  */
