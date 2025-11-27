@@ -3,7 +3,7 @@
  */
 
 import { get } from 'svelte/store';
-import { htmlSource, iframeDocument } from './stores.js';
+import { htmlSource, iframeDocument, isInitializingProperties } from './stores.js';
 import { history } from './history.js';
 
 /**
@@ -49,6 +49,12 @@ function debounce(func, wait) {
  * Sync htmlSource with current iframe DOM (debounced) and add to history
  */
 export const syncHTMLSource = debounce(() => {
+	// Skip sync if we're initializing properties
+	if (get(isInitializingProperties)) {
+		console.log('🔄 Skipping sync - initializing properties');
+		return;
+	}
+
 	console.log('🔄 syncHTMLSource called');
 	const html = extractHTMLFromIframe();
 	if (html) {

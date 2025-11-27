@@ -5,8 +5,12 @@
 	import ContextMenu from '$lib/components/ContextMenu.svelte';
 	import CodeEditor from '$lib/components/CodeEditor.svelte';
 	import LayersPanel from '$lib/components/LayersPanel.svelte';
-	import { htmlSource, currentMode, viewportSize, iframeDocument, selectedElement } from '$lib/stores.js';
+	import StartupModal from '$lib/components/StartupModal.svelte';
+	import { htmlSource, currentMode, viewportSize, iframeDocument, selectedElement, isInitializingProperties } from '$lib/stores.js';
 	import { history } from '$lib/history.js';
+
+	/** @type {boolean} */
+	let showStartupModal = true;
 
 	/** @type {boolean} */
 	let showContextMenu = false;
@@ -22,6 +26,34 @@
 
 	/** @type {any} */
 	let canvasComponent = null;
+
+	/**
+	 * Handle HTML selection from startup modal
+	 * @param {string} html
+	 */
+	function handleHTMLSelected(html) {
+		// Clear selected element
+		selectedElement.set(null);
+
+		// Cleanup Monaco Editor if it exists
+		if (monacoEditor) {
+			try {
+				monacoEditor.dispose();
+				monacoEditor = null;
+			} catch (e) {
+				console.warn('Error disposing Monaco editor:', e);
+			}
+		}
+
+		if (html === 'default') {
+			// Use the default HTML from stores
+			showStartupModal = false;
+		} else {
+			// Use custom HTML
+			htmlSource.set(html);
+			showStartupModal = false;
+		}
+	}
 
 	/**
 	 * Handle iframe load
@@ -59,6 +91,14 @@
 	 */
 	function handleElementSelect(element) {
 		console.log('Element selected:', element.tagName, element.className);
+		
+		// Set flag to prevent sync during property initialization
+		isInitializingProperties.set(true);
+		
+		// Reset flag after properties are initialized
+		setTimeout(() => {
+			isInitializingProperties.set(false);
+		}, 1000);
 	}
 
 	/**
@@ -284,6 +324,9 @@
 			</div>
 		</div>
 	{/if}
+	
+	<!-- Startup Modal -->
+	<StartupModal bind:open={showStartupModal} onHTMLSelected={handleHTMLSelected} />
 	
 	<!-- Layers Panel -->
 	<LayersPanel />

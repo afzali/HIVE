@@ -186,6 +186,7 @@
 	>
 		<iframe
 			bind:this={iframeElement}
+			srcdoc={htmlSource}
 			on:load={handleIframeLoad}
 			on:show-context-menu={handleContextMenuEvent}
 			on:close-context-menu={handleCloseContextMenuEvent}

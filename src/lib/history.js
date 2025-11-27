@@ -123,9 +123,12 @@ export function createHistoryStore(maxSize = 20) {
 		 */
 		push: (state) => {
 			manager.push(state);
+			const canUndo = manager.canUndo();
+			const canRedo = manager.canRedo();
+			console.log(`📚 History pushed. Can undo: ${canUndo}, Can redo: ${canRedo}`);
 			set({
-				canUndo: manager.canUndo(),
-				canRedo: manager.canRedo()
+				canUndo,
+				canRedo
 			});
 		},
 		/**
@@ -134,9 +137,12 @@ export function createHistoryStore(maxSize = 20) {
 		 */
 		undo: () => {
 			const state = manager.undo();
+			const canUndo = manager.canUndo();
+			const canRedo = manager.canRedo();
+			console.log(`↶ Undo called. Can undo: ${canUndo}, Can redo: ${canRedo}, Returned state: ${state ? 'yes' : 'no'}`);
 			set({
-				canUndo: manager.canUndo(),
-				canRedo: manager.canRedo()
+				canUndo,
+				canRedo
 			});
 			return state;
 		},
@@ -146,9 +152,12 @@ export function createHistoryStore(maxSize = 20) {
 		 */
 		redo: () => {
 			const state = manager.redo();
+			const canUndo = manager.canUndo();
+			const canRedo = manager.canRedo();
+			console.log(`↷ Redo called. Can undo: ${canUndo}, Can redo: ${canRedo}, Returned state: ${state ? 'yes' : 'no'}`);
 			set({
-				canUndo: manager.canUndo(),
-				canRedo: manager.canRedo()
+				canUndo,
+				canRedo
 			});
 			return state;
 		},
