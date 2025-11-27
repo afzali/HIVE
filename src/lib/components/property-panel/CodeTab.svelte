@@ -54,7 +54,17 @@
 	 * Initialize CSS editor
 	 */
 	function initializeCSSEditor() {
-		if (!monaco || !cssEditorContainer || monacoEditor) return;
+		if (!monaco || !cssEditorContainer) return;
+		
+		// Dispose existing editor if any
+		if (monacoEditor) {
+			try {
+				monacoEditor.dispose();
+				monacoEditor = null;
+			} catch (e) {
+				console.warn('Error disposing Monaco editor:', e);
+			}
+		}
 		
 		try {
 			monacoEditor = monaco.editor.create(cssEditorContainer, {

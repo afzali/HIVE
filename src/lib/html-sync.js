@@ -4,6 +4,7 @@
 
 import { get } from 'svelte/store';
 import { htmlSource, iframeDocument } from './stores.js';
+import { history } from './history.js';
 
 /**
  * Extract complete HTML from iframe
@@ -45,14 +46,23 @@ function debounce(func, wait) {
 }
 
 /**
- * Sync htmlSource with current iframe DOM (debounced)
+ * Sync htmlSource with current iframe DOM (debounced) and add to history
  */
 export const syncHTMLSource = debounce(() => {
 	console.log('🔄 syncHTMLSource called');
 	const html = extractHTMLFromIframe();
 	if (html) {
-		htmlSource.set(html);
-		console.log('🔄 HTML synced from iframe to htmlSource');
+		const currentHTML = get(htmlSource);
+		
+		// Only add to history if HTML actually changed
+		if (html !== currentHTML) {
+			htmlSource.set(html);
+			// Add to history for undo/redo
+			history.push(html);
+			console.log('🔄 HTML synced from iframe to htmlSource and added to history');
+		} else {
+			console.log('🔄 HTML unchanged, skipping history push');
+		}
 	} else {
 		console.log('🔄 No HTML extracted');
 	}

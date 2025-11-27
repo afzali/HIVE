@@ -2,8 +2,10 @@
 	import * as DropdownMenu from '$lib/components/ui/dropdown-menu';
 	import { Button } from '$lib/components/ui/button';
 	import CustomSizeDialog from '$lib/components/CustomSizeDialog.svelte';
-	import { currentMode, viewportSize, layersPanelOpen, editToolbarOpen } from '$lib/stores.js';
+	import { currentMode, viewportSize, editToolbarOpen, layersPanelOpen, selectedElement, iframeDocument } from '$lib/stores.js';
 	import { VIEWPORT_PRESETS } from '$lib/types.js';
+	import { history } from '$lib/history.js';
+	import { syncHTMLSource } from '$lib/html-sync.js';
 	import { 
 		Play, 
 		Pause, 
@@ -17,7 +19,9 @@
 		Settings, 
 		Save, 
 		X,
-		MoreHorizontal
+		MoreHorizontal,
+		Undo,
+		Redo
 	} from 'lucide-svelte';
 
 	/**
@@ -93,12 +97,7 @@
 		editToolbarOpen.set(true);
 	}
 
-	/**
-	 * Toggle layers panel
-	 */
-	function toggleLayersPanel() {
-		layersPanelOpen.update(open => !open);
-	}
+
 
 	/**
 	 * Toggle assets panel
@@ -109,11 +108,119 @@
 	}
 
 	/**
-	 * Save current work
+	 * Save current work - download HTML file (clean without hive-ids)
 	 */
 	function handleSave() {
-		// TODO: Implement save functionality
-		console.log('Save clicked');
+		// First sync to make sure we have latest HTML
+		syncHTMLSource();
+		
+		// Get HTML from iframe
+		const iframe = document.querySelector('iframe');
+		if (!iframe || !iframe.contentDocument) return;
+		
+		// Clone the document to avoid modifying the original
+		const clonedDoc = iframe.contentDocument.cloneNode(true);
+		
+		// Remove all editor-related attributes and classes
+		const elementsWithHiveId = clonedDoc.querySelectorAll('[data-hive-id]');
+		elementsWithHiveId.forEach(element => {
+			element.removeAttribute('data-hive-id');
+		});
+
+		// Remove all hive-related classes
+		const allElements = clonedDoc.querySelectorAll('*');
+		allElements.forEach(element => {
+			// Remove classes that start with 'hive-'
+			const classList = Array.from(element.classList);
+			classList.forEach(className => {
+				if (className.startsWith('hive-')) {
+					element.classList.remove(className);
+				}
+			});
+		});
+		
+		const html = clonedDoc.documentElement.outerHTML;
+		const blob = new Blob([html], { type: 'text/html' });
+		const url = URL.createObjectURL(blob);
+		
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = 'edited-page.html';
+		document.body.appendChild(a);
+		a.click();
+		document.body.removeChild(a);
+		URL.revokeObjectURL(url);
+		
+		console.log('💾 Clean HTML downloaded (without hive-ids)');
+	}
+
+	/**
+	 * Toggle layers panel
+	 */
+	function toggleLayersPanel() {
+		layersPanelOpen.update(open => !open);
+	}
+
+	/**
+	 * Undo last change
+	 */
+	function undoChange() {
+		const previousHTML = history.undo();
+		if (previousHTML) {
+			// Clear selection first to remove highlights
+			selectedElement.set(null);
+			
+			// Update iframe with previous HTML
+			const iframe = document.querySelector('iframe');
+			if (iframe && iframe.contentDocument) {
+				// Extract just the HTML content without DOCTYPE
+				const htmlContent = previousHTML.replace(/<!DOCTYPE html>\s*/i, '');
+				
+				// Replace the entire document content
+				iframe.contentDocument.open();
+				iframe.contentDocument.write(htmlContent);
+				iframe.contentDocument.close();
+				
+				// Update iframeDocument store and trigger overlay re-setup
+				setTimeout(() => {
+					iframeDocument.set(iframe.contentDocument);
+					// Dispatch iframe-ready event to re-setup overlay
+					iframe.dispatchEvent(new CustomEvent('iframe-ready'));
+				}, 100);
+			}
+			console.log('↶ Undid change');
+		}
+	}
+
+	/**
+	 * Redo last undone change
+	 */
+	function redoChange() {
+		const nextHTML = history.redo();
+		if (nextHTML) {
+			// Clear selection first to remove highlights
+			selectedElement.set(null);
+			
+			// Update iframe with next HTML
+			const iframe = document.querySelector('iframe');
+			if (iframe && iframe.contentDocument) {
+				// Extract just the HTML content without DOCTYPE
+				const htmlContent = nextHTML.replace(/<!DOCTYPE html>\s*/i, '');
+				
+				// Replace the entire document content
+				iframe.contentDocument.open();
+				iframe.contentDocument.write(htmlContent);
+				iframe.contentDocument.close();
+				
+				// Update iframeDocument store and trigger overlay re-setup
+				setTimeout(() => {
+					iframeDocument.set(iframe.contentDocument);
+					// Dispatch iframe-ready event to re-setup overlay
+					iframe.dispatchEvent(new CustomEvent('iframe-ready'));
+				}, 100);
+			}
+			console.log('↷ Redid change');
+		}
 	}
 
 	/**
@@ -153,19 +260,7 @@
 				{/if}
 			</Button>
 
-			<!-- Separator -->
-			<div class="w-px h-6 bg-gray-600 mx-1"></div>
 
-			<!-- Show Layers Panel -->
-			<Button
-				variant="ghost"
-				size="sm"
-				class="w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors {$layersPanelOpen ? 'bg-gray-700/70 text-white' : ''}"
-				onclick={toggleLayersPanel}
-				title="Toggle Layers Panel"
-			>
-				<Layers class="w-5 h-5" />
-			</Button>
 
 			<!-- Show Assets Panel -->
 			<Button
@@ -257,6 +352,50 @@
 					</DropdownMenu.Group>
 				</DropdownMenu.Content>
 			</DropdownMenu.Root>
+
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
+
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
+
+			<!-- Layers Panel -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class={`w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors ${$layersPanelOpen ? 'bg-gray-700/70 text-white' : ''}`}
+				onclick={toggleLayersPanel}
+				title="Toggle Layers Panel"
+			>
+				<Layers class="w-5 h-5" />
+			</Button>
+
+			<!-- Separator -->
+			<div class="w-px h-6 bg-gray-600 mx-1"></div>
+
+			<!-- Undo -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class={`w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors ${!$history.canUndo ? 'opacity-50' : ''}`}
+				disabled={!$history.canUndo}
+				onclick={undoChange}
+				title="Undo"
+			>
+				<Undo class="w-5 h-5" />
+			</Button>
+
+			<!-- Redo -->
+			<Button
+				variant="ghost"
+				size="sm"
+				class={`w-10 h-10 p-0 rounded-xl hover:bg-gray-700/50 text-gray-300 hover:text-white transition-colors ${!$history.canRedo ? 'opacity-50' : ''}`}
+				disabled={!$history.canRedo}
+				onclick={redoChange}
+				title="Redo"
+			>
+				<Redo class="w-5 h-5" />
+			</Button>
 
 			<!-- Separator -->
 			<div class="w-px h-6 bg-gray-600 mx-1"></div>

@@ -534,7 +534,7 @@
 		<div class="p-3 bg-primary/5 border border-primary/20 rounded-lg">
 			<div class="text-xs font-medium text-primary mb-1">Selected Element</div>
 			<div class="text-xs text-muted-foreground">
-				{$selectedElement.tagName.toLowerCase()}{$selectedElement.id ? `#${$selectedElement.id}` : ''}{$selectedElement.className ? `.${$selectedElement.className.split(' ').join('.')}` : ''}
+				{$selectedElement?.tagName?.toLowerCase() || ''}{$selectedElement?.id ? `#${$selectedElement.id}` : ''}{$selectedElement?.className && typeof $selectedElement.className === 'string' ? `.${$selectedElement.className.split(' ').join('.')}` : ''}
 			</div>
 		</div>
 	{/if}

@@ -42,7 +42,17 @@
 	 * Initialize HTML editor
 	 */
 	function initializeHTMLEditor() {
-		if (!monaco || !htmlEditorContainer || htmlMonacoEditor) return;
+		if (!monaco || !htmlEditorContainer) return;
+		
+		// Dispose existing editor if any
+		if (htmlMonacoEditor) {
+			try {
+				htmlMonacoEditor.dispose();
+				htmlMonacoEditor = null;
+			} catch (e) {
+				console.warn('Error disposing Monaco editor:', e);
+			}
+		}
 		
 		try {
 			htmlMonacoEditor = monaco.editor.create(htmlEditorContainer, {

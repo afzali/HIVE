@@ -175,6 +175,11 @@ export function overlayAction(iframe, options = {}) {
 
 		console.log('Setting up overlay in iframe');
 
+		// CRITICAL: Remove ALL existing overlay elements first
+		const existingOverlays = iframeDoc.body.querySelectorAll('.hive-overlay, .hive-highlight, .hive-hover, .hive-label');
+		existingOverlays.forEach(el => el.remove());
+		console.log(`Removed ${existingOverlays.length} existing overlay elements`);
+
 		overlayDiv = iframeDoc.createElement('div');
 		overlayDiv.className = 'hive-overlay';
 
