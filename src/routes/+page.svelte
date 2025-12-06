@@ -96,9 +96,12 @@
 		isInitializingProperties.set(true);
 		
 		// Reset flag after properties are initialized
-		setTimeout(() => {
-			isInitializingProperties.set(false);
-		}, 1000);
+		// Using requestAnimationFrame to ensure all reactive updates are complete
+		requestAnimationFrame(() => {
+			requestAnimationFrame(() => {
+				isInitializingProperties.set(false);
+			});
+		});
 	}
 
 	/**

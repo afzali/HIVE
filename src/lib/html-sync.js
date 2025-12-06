@@ -3,7 +3,7 @@
  */
 
 import { get } from 'svelte/store';
-import { htmlSource, iframeDocument, isInitializingProperties } from './stores.js';
+import { htmlSource, iframeDocument, isInitializingProperties, isActivelyEditing } from './stores.js';
 import { history } from './history.js';
 
 /**
@@ -28,14 +28,14 @@ export function extractHTMLFromIframe() {
 }
 
 /**
- * Debounce function
+ * Debounce function with cancellable timeout
  * @param {Function} func
  * @param {number} wait
- * @returns {Function}
+ * @returns {Function & {cancel: Function}}
  */
 function debounce(func, wait) {
 	let timeout;
-	return function executedFunction(...args) {
+	const executedFunction = function(...args) {
 		const later = () => {
 			clearTimeout(timeout);
 			func(...args);
@@ -43,12 +43,16 @@ function debounce(func, wait) {
 		clearTimeout(timeout);
 		timeout = setTimeout(later, wait);
 	};
+	executedFunction.cancel = () => {
+		clearTimeout(timeout);
+	};
+	return executedFunction;
 }
 
 /**
- * Sync htmlSource with current iframe DOM (debounced) and add to history
+ * Internal sync function - does the actual work
  */
-export const syncHTMLSource = debounce(() => {
+function doSyncHTMLSource() {
 	// Skip sync if we're initializing properties
 	if (get(isInitializingProperties)) {
 		console.log('🔄 Skipping sync - initializing properties');
@@ -72,7 +76,29 @@ export const syncHTMLSource = debounce(() => {
 	} else {
 		console.log('🔄 No HTML extracted');
 	}
-}, 500);
+}
+
+// Debounced version
+const debouncedSync = debounce(doSyncHTMLSource, 500);
+
+/**
+ * Sync htmlSource with current iframe DOM (debounced) and add to history
+ * Skips scheduling if initializing properties or actively editing
+ */
+export function syncHTMLSource() {
+	// Don't even schedule the sync if we're initializing or actively editing
+	if (get(isInitializingProperties)) {
+		console.log('🔄 Skipping sync scheduling - initializing properties');
+		debouncedSync.cancel();
+		return;
+	}
+	if (get(isActivelyEditing)) {
+		console.log('🔄 Skipping sync scheduling - actively editing');
+		debouncedSync.cancel();
+		return;
+	}
+	debouncedSync();
+}
 
 /**
  * Sync htmlSource immediately (for Save operations)

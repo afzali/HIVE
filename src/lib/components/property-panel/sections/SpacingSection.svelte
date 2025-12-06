@@ -4,7 +4,7 @@
 	import * as Select from '$lib/components/ui/select';
 	import { selectedElement } from '$lib/stores.js';
 	import { applyStyleProperty } from '$lib/dom-utils.js';
-	import { syncHTMLSource } from '$lib/html-sync.js';
+	// syncHTMLSource removed - changes are applied directly to DOM
 
 	/**
 	 * @type {function(string, any): void} onPropertyChange
@@ -115,7 +115,7 @@
 			const element = $selectedElement;
 			applyStyleProperty(element, property, processedValue);
 			onPropertyChange(property, processedValue);
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
 
@@ -130,7 +130,7 @@
 			const element = $selectedElement;
 			applyStyleProperty(element, property, processedValue);
 			onPropertyChange(property, processedValue);
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
 

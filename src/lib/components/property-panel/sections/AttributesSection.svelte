@@ -5,7 +5,7 @@
 	import { AutocompleteInput } from '$lib/components/ui/autocomplete-input';
 	import { selectedElement } from '$lib/stores.js';
 	import { debounce } from '$lib/dom-utils.js';
-	import { syncHTMLSource } from '$lib/html-sync.js';
+	// syncHTMLSource removed - changes are applied directly to DOM
 
 	/**
 	 * @type {function(string, any): void} onPropertyChange
@@ -68,7 +68,7 @@
 		if ($selectedElement) {
 			$selectedElement.id = elementId;
 			onPropertyChange('id', elementId);
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
 
@@ -86,7 +86,7 @@
 				$selectedElement.className.baseVal = elementClasses.join(' ');
 			}
 			onPropertyChange('className', elementClasses.join(' '));
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 			newClass = '';
 		}
 	}
@@ -105,7 +105,7 @@
 				$selectedElement.className.baseVal = elementClasses.join(' ');
 			}
 			onPropertyChange('className', elementClasses.join(' '));
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
 
@@ -117,7 +117,7 @@
 			const element = $selectedElement;
 			element.textContent = textContent;
 			onPropertyChange('textContent', textContent);
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}, 300);
 
@@ -129,7 +129,7 @@
 			const element = $selectedElement;
 			element.textContent = textContent;
 			onPropertyChange('textContent', textContent);
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
 </script>

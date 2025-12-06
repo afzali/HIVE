@@ -5,8 +5,17 @@
 	import * as Tabs from '$lib/components/ui/tabs';
 	import * as Collapsible from '$lib/components/ui/collapsible';
 	import { ChevronDown, Plus, X, Copy } from 'lucide-svelte';
-	import { selectedElement } from '$lib/stores.js';
+	import { selectedElement, isActivelyEditing } from '$lib/stores.js';
 	import { syncHTMLSource } from '$lib/html-sync.js';
+
+	// Helper functions to manage editing state
+	function handleInputFocus() {
+		isActivelyEditing.set(true);
+	}
+	
+	function handleInputBlur() {
+		isActivelyEditing.set(false);
+	}
 
 	/**
 	 * @type {function(string, any): void} onPropertyChange
@@ -70,6 +79,9 @@
 
 	// Track the last processed element to avoid reactive loops
 	let lastProcessedElement = null;
+
+	// Flag to prevent reactive updates during element property initialization
+	let isUpdatingFromElement = false;
 
 	/**
 	 * Get the iframe document where the HTML editor content is
@@ -154,7 +166,7 @@
 				if (attr.name.startsWith('data-prop-')) {
 					const propName = attr.name.substring(10);
 					props.push({ name: propName, value: attr.value });
-				} else if (!attr.name.startsWith('data-') && 
+				} else if (attr.name.startsWith('data-') && 
 						   !['class', 'id', 'style'].includes(attr.name) &&
 						   !attr.name.startsWith('on')) {
 					customAttrs.push({ name: attr.name, value: attr.value });
@@ -262,6 +274,9 @@
 	function updateElementProperties(element) {
 		if (!element || !element.isConnected) return;
 
+		// Set flag to prevent reactive side effects during initialization
+		isUpdatingFromElement = true;
+		
 		// Reset all values
 		componentType = 'none';
 		componentName = '';
@@ -330,6 +345,14 @@
 		
 		componentProps = props;
 		customAttributes = customAttrs;
+		
+		// Update previousComponentType to match current state to prevent reactive trigger
+		previousComponentType = componentType;
+		
+		// Clear the flag after a tick to allow future reactive updates
+		setTimeout(() => {
+			isUpdatingFromElement = false;
+		}, 0);
 	}
 
 	$: if ($selectedElement && $selectedElement !== lastProcessedElement) {
@@ -339,27 +362,30 @@
 
 	// Handle component type changes
 	let previousComponentType = componentType;
-	$: if (componentType !== previousComponentType) {
-		handleComponentTypeChange(componentType);
+	$: if (componentType !== previousComponentType && !isUpdatingFromElement) {
+		handleComponentTypeChange(componentType, previousComponentType);
 		previousComponentType = componentType;
 	}
 
 	/**
 	 * Handle component type change
 	 */
-	function handleComponentTypeChange(type) {
-		componentType = type;
+	function handleComponentTypeChange(type, prevType) {
+		// Only sync if changing to 'none' (removing annotations)
+		// For other changes, wait until user fills in the name
 		if (type === 'none') {
 			removeComponentAnnotations();
-		} else {
-			applyComponentAnnotation();
+			syncHTMLSource();
 		}
+		// Don't call applyComponentAnnotation here - let the user fill in the name first
+		// The annotation will be applied when the name input changes
 	}
 
 	/**
 	 * Apply component annotation to element
+	 * @param {boolean} shouldSync - Whether to sync HTML source after applying (default: false)
 	 */
-	function applyComponentAnnotation() {
+	function applyComponentAnnotation(shouldSync = false) {
 		if (!$selectedElement) return;
 		
 		const element = $selectedElement;
@@ -419,7 +445,10 @@
 			element.setAttribute('data-else', '');
 		}
 		
-		syncHTMLSource();
+		// Only sync if explicitly requested - this prevents iframe reload
+		if (shouldSync) {
+			syncHTMLSource();
+		}
 	}
 
 	/**
@@ -492,7 +521,7 @@
 			$selectedElement.removeAttribute(attrToRemove.name);
 		}
 		customAttributes = customAttributes.filter((_, i) => i !== index);
-		syncHTMLSource();
+		// Don't sync here - changes are applied directly to DOM
 	}
 
 	/**
@@ -515,11 +544,9 @@
 			if (attr.name && attr.value) {
 				element.setAttribute(attr.name, attr.value);
 			}
-			
-			syncHTMLSource();
+			// Don't sync here - changes are applied directly to DOM
 		}
 	}
-
 
 </script>
 
@@ -659,6 +686,8 @@
 							id="component-name"
 							bind:value={componentName}
 							oninput={applyComponentAnnotation}
+							onfocus={handleInputFocus}
+							onblur={handleInputBlur}
 							placeholder="ComponentName"
 							class="h-9 text-sm"
 						/>
@@ -671,6 +700,8 @@
 								id="route-path"
 								bind:value={routePath}
 								oninput={applyComponentAnnotation}
+								onfocus={handleInputFocus}
+								onblur={handleInputBlur}
 								placeholder="/dashboard"
 								class="h-9 text-sm"
 							/>
@@ -695,6 +726,8 @@
 						id="loop-expression"
 						bind:value={loopExpression}
 						oninput={applyComponentAnnotation}
+						onfocus={handleInputFocus}
+						onblur={handleInputBlur}
 						placeholder="item in items"
 						class="h-9 text-sm"
 					/>
@@ -705,6 +738,8 @@
 						id="loop-key"
 						bind:value={loopKey}
 						oninput={applyComponentAnnotation}
+						onfocus={handleInputFocus}
+						onblur={handleInputBlur}
 						placeholder="item.id"
 						class="h-9 text-sm"
 					/>
@@ -788,6 +823,8 @@
 					id="navigation-path"
 					bind:value={navigationPath}
 					oninput={applyComponentAnnotation}
+					onfocus={handleInputFocus}
+					onblur={handleInputBlur}
 					placeholder="/product/123"
 					class="h-9 text-sm"
 				/>
@@ -809,6 +846,8 @@
 						id="conditional-if"
 						bind:value={conditionalIf}
 						oninput={applyComponentAnnotation}
+						onfocus={handleInputFocus}
+						onblur={handleInputBlur}
 						placeholder="user.isLoggedIn"
 						class="h-9 text-sm"
 					/>

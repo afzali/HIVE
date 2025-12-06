@@ -158,3 +158,9 @@ export const isLoading = writable(false);
  * @type {import('svelte/store').Writable<boolean>}
  */
 export const isInitializingProperties = writable(false);
+
+/**
+ * Flag to prevent sync during active editing (typing in inputs)
+ * @type {import('svelte/store').Writable<boolean>}
+ */
+export const isActivelyEditing = writable(false);
