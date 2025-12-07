@@ -290,6 +290,12 @@
 		propIdCounter = 0;
 		customAttributes = [];
 		attributeIdCounter = 0;
+		
+		// Reset template state
+		templateMode = 'new';
+		selectedTemplate = '';
+		previousSelectedTemplate = '';
+		previousTemplateMode = 'new';
 
 		// Read existing attributes
 		if (element.hasAttribute('data-cmp')) {
